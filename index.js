@@ -1,10 +1,11 @@
 import ccxt, { binance } from "ccxt"
 import delay from "delay"
+import 'dotenv/config'
 import moment from "moment"
 
 const bnb = new ccxt.binance({
-    apiKey: 'S6jde05yZO2zu8NP5OeAzu6cpk8qRkwytufDD13wFE6TxSvO2GtOXi5zxGbs1xd0',
-    secret: 'jQYTqlWExHyd5KiJNggh7ol8x5mw8ZAV2x6t90p9C9dgc2QJLZDILOTbfMz9phAa'
+    apiKey: process.env.API_KEY,
+    secret: process.env.SECRET
 })
 bnb.setSandboxMode(true)
 
