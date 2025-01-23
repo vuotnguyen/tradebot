@@ -1,4 +1,5 @@
-import ccxt from "ccxt"
+import ccxt, { binance } from "ccxt"
+import delay from "delay"
 import moment from "moment"
 
 const bnb = new ccxt.binance({
@@ -9,14 +10,14 @@ bnb.setSandboxMode(true)
 
 const balance = async() => {
     const balance = await bnb.fetchBalance()
-    console.log('giao dich ', balance);
+    const total = balance.total
+    console.log(`Tai san: BTC ${total.BTC} , USDT: ${total.USDT}`);
     
 }
 
-const main = async() => {
-    const price = await bnb.fetchOHLCV('AIUSDT', '15m', undefined, 192)
+const tradeBot = async() => {
+    const price = await bnb.fetchOHLCV('BTC/USDT', '15m', undefined, 5)
     const formatPrice = price.map(price => {
-
         return{
             timestamp: moment(price[0]).format(),
             open: price[1],
@@ -26,11 +27,27 @@ const main = async() => {
             volume: price[5]
         }
     })
-    const higherArea = formatPrice.reduce((rs, current) => {
-        return rs.hight < current.hight ? current : rs
-    })
-    console.log('bnb info ai feature ', higherArea);
+
+    const averagePrice = formatPrice.reduce((acc, price) => acc + price.close, 0)/5
+    const lastPrice = formatPrice[formatPrice.length - 1].close
+
+    console.log(formatPrice.map(p => p.close), averagePrice, lastPrice);
+    const condition = lastPrice > averagePrice ? "sell" : "buy"
+    const TRADE_VOLLUMN = 100
+    const quantity = TRADE_VOLLUMN / lastPrice
+
+    console.log(`average price: ${averagePrice} , Last price: ${lastPrice}`);
+    const order  = await bnb.createMarketOrder("BTC/USDT", condition, quantity)
     
+    console.log(`Oder by ${moment().format()}: ${condition} ${quantity} BTC at ${lastPrice}`);
+    balance()
+    
+}
+const main = async() => {
+    while (true) {
+        await tradeBot()
+        await delay(60000)
+    }
 }
 main()
 // balance()
