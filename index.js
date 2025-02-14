@@ -3,6 +3,32 @@ import delay from "delay"
 import 'dotenv/config'
 import moment from "moment"
 
+
+const subMain = async () => {
+    // listen realtime crypto
+    const exchangeId = 'binance'; // Sàn giao dịch
+    const symbols = ['BTC/USDT', 'ETH/USDT', 'XRP/USDT']; // Các cặp giao dịch cần lắng nghe
+
+    try {
+        const exchange = new ccxt[exchangeId]();
+
+        console.log(`Đang kết nối WebSocket để lắng nghe giá real-time...`);
+
+        while (true) {
+            // Lắng nghe giá cho tất cả các cặp
+            const prices = await Promise.all(symbols.map((symbol) => exchange.watchTicker(symbol)));
+
+            // Hiển thị giá của từng cặp
+            prices.forEach((ticker, index) => {
+                const { last, bid, ask } = ticker;
+                console.log(`[${symbols[index]}] Giá: ${last} | Bid: ${bid} | Ask: ${ask}`);
+            });
+        }
+    } catch (error) {
+        console.error('Có lỗi xảy ra:', error.message);
+    }
+};
+
 const bnb = new ccxt.binance({
     apiKey: process.env.API_KEY,
     secret: process.env.SECRET
@@ -18,6 +44,7 @@ const balance = async() => {
 
 const tradeBot = async() => {
     const price = await bnb.fetchOHLCV('BTC/USDT', '15m', undefined, 5)
+    const sub = await bnb.listener
     const formatPrice = price.map(price => {
         return{
             timestamp: moment(price[0]).format(),
@@ -38,7 +65,7 @@ const tradeBot = async() => {
     const quantity = TRADE_VOLLUMN / lastPrice
 
     console.log(`average price: ${averagePrice} , Last price: ${lastPrice}`);
-    const order  = await bnb.createMarketOrder("BTC/USDT", condition, quantity)
+    await bnb.createMarketOrder("BTC/USDT", condition, quantity)
     
     console.log(`Oder by ${moment().format()}: ${condition} ${quantity} BTC at ${lastPrice}`);
     balance()
@@ -51,4 +78,4 @@ const main = async() => {
     }
 }
 main()
-// balance()
+// subMain()
