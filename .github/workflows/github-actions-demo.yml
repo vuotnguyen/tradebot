@@ -1,0 +1,18 @@
+name: GitHub Actions Demo 
+run-name: ${{ github.actor }} đang thử nghiệm GitHub Actions 🚀 
+vào lúc: [push] 
+jobs: 
+  Explore-GitHub-Actions: 
+    runs-on: ubuntu-latest 
+    steps: 
+      - run: echo "🎉 Công việc đã được tự động kích hoạt bởi sự kiện ${{ github.event_name }}." 
+      - run: echo "🐧 Công việc này hiện đang chạy trên máy chủ ${{ runner.os }} do GitHub lưu trữ!" 
+      - run: echo "🔎 Tên nhánh của bạn là ${{ github.ref }} và kho lưu trữ của bạn là ${{ github.repository }}." 
+      - name: Kiểm tra mã kho lưu trữ 
+        sử dụng: actions/checkout@v4 
+      - run: echo "💡 Kho lưu trữ ${{ github.repository }} đã được sao chép vào runner." 
+      - run: echo "🖥️ Quy trình làm việc hiện đã sẵn sàng để kiểm tra mã của bạn trên runner." 
+      - name: Liệt kê các tệp trong kho lưu trữ 
+        run: | 
+          ls ${{ github.workspace }} 
+      - run: echo "🍏 Trạng thái của công việc này là ${{ job.status }}."
