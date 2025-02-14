@@ -71,6 +71,7 @@ const tradeBot = async() => {
     balance()
     console.log('check git branch');
     console.log('check git branch 2');
+    var ;
     
 }
 const main = async() => {
