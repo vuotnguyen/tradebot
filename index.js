@@ -70,6 +70,7 @@ const tradeBot = async() => {
     console.log(`Oder by ${moment().format()}: ${condition} ${quantity} BTC at ${lastPrice}`);
     balance()
     console.log('check git branch');
+    console.log('check git branch 2');
     
 }
 const main = async() => {
