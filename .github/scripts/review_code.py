@@ -1,11 +1,20 @@
-import openai
-import os
+
 import subprocess
+
+import os
+from openai import OpenAI
 
 # Lấy danh sách file thay đổi trong Pull Request
 changed_files = subprocess.check_output(["git", "diff", "--name-only", "HEAD~1"]).decode().splitlines()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("Missing OPENAI_API_KEY. Make sure it's set in GitHub Secrets.")
+
+
+client = OpenAI(
+    api_key=api_key,  # This is the default and can be omitted
+)
 
 review_comments = []
 
@@ -16,8 +25,8 @@ for file in changed_files:
 
         prompt = f"Review the following code and suggest improvements:\n\n{code}"
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}]
         )
 
