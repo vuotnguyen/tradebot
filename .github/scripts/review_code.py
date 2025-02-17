@@ -8,6 +8,9 @@ from openai import OpenAI
 changed_files = subprocess.check_output(["git", "diff", "--name-only", "HEAD~1"]).decode().splitlines()
 
 api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("Missing OPENAI_API_KEY. Make sure it's set in GitHub Secrets.")
+
 
 client = OpenAI(
     api_key=api_key,  # This is the default and can be omitted
