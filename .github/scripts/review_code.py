@@ -9,7 +9,7 @@ changed_files = subprocess.check_output(["git", "diff", "--name-only", "HEAD~1"]
 
 api_key = os.getenv("OPENAI_API_KEY")
 
-client = Openai(
+client = OpenAI(
     api_key=api_key,  # This is the default and can be omitted
 )
 
@@ -24,7 +24,7 @@ for file in changed_files:
         prompt = f"Review the following code and suggest improvements:\n\n{code}"
 
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[{"role": "user", "content": prompt}]
         )
 

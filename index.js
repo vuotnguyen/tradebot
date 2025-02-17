@@ -74,6 +74,7 @@ const tradeBot = async() => {
     console.log('check git branch commit 4');
     console.log('check git branch commit 6');
     console.log('check git branch commit 7');
+    console.log('check git branch commit 8');
     var condition = 0 ;
 }
 const main = async() => {
