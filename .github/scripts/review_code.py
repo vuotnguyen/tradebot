@@ -16,7 +16,6 @@ client = OpenAI(
     api_key=api_key,  # This is the default and can be omitted
 )
 
-print(f"Welcome, {api_key}!")
 review_comments = []
 
 for file in changed_files:
@@ -27,7 +26,7 @@ for file in changed_files:
         prompt = f"Review the following code and suggest improvements:\n\n{code}"
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}]
         )
 
