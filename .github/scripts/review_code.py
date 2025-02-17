@@ -7,6 +7,7 @@ changed_files = subprocess.check_output(["git", "diff", "--name-only", "HEAD~1"]
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+print(f"Welcome, {openai.api_key}!")
 review_comments = []
 
 for file in changed_files:
