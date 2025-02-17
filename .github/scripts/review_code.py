@@ -7,7 +7,7 @@ changed_files = subprocess.check_output(["git", "diff", "--name-only", "HEAD~1"]
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-client = OpenAI(
+client = openai(
     api_key=openai.api_key,  # This is the default and can be omitted
 )
 
