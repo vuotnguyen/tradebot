@@ -2,8 +2,13 @@ import ccxt, { binance } from "ccxt"
 import delay from "delay"
 import 'dotenv/config'
 import moment from "moment"
-import { dummyData } from "./src/data";
-import { cuaHang } from "./src/cuaHang";
+import { dummyData, token } from "./src/data.js";
+import { cuaHang } from "./src/cuaHang.js";
+import { v4 } from "uuid"
+
+import { Agent } from "https"; // Dùng `http` nếu API là HTTP
+
+const agent = new Agent({ keepAlive: true });
 
 const subMain = async () => {
     // listen realtime crypto
@@ -36,18 +41,18 @@ const bnb = new ccxt.binance({
 })
 bnb.setSandboxMode(true)
 
-const balance = async() => {
+const balance = async () => {
     const balance = await bnb.fetchBalance()
     const total = balance.total
     console.log(`Tai san: BTC ${total.BTC} , USDT: ${total.USDT}`);
-    
+
 }
 
-const tradeBot = async() => {
+const tradeBot = async () => {
     const price = await bnb.fetchOHLCV('BTC/USDT', '15m', undefined, 5)
     const sub = await bnb.listener
     const formatPrice = price.map(price => {
-        return{
+        return {
             timestamp: moment(price[0]).format(),
             open: price[1],
             hight: price[2],
@@ -57,7 +62,7 @@ const tradeBot = async() => {
         }
     })
 
-    const averagePrice = formatPrice.reduce((acc, price) => acc + price.close, 0)/5
+    const averagePrice = formatPrice.reduce((acc, price) => acc + price.close, 0) / 5
     const lastPrice = formatPrice[formatPrice.length - 1].close
 
     console.log(formatPrice.map(p => p.close), averagePrice, lastPrice);
@@ -67,7 +72,7 @@ const tradeBot = async() => {
 
     console.log(`average price: ${averagePrice} , Last price: ${lastPrice}`);
     await bnb.createMarketOrder("BTC/USDT", condition, quantity)
-    
+
     // console.log(`Oder by ${moment().format()}: ${condition} ${quantity} BTC at ${lastPrice}`);
     // balance()
     // console.log('check git branch');
@@ -81,7 +86,7 @@ const tradeBot = async() => {
     // console.log('check git branch commit 12');
     // var condition = 0 ;
 }
-const main = async() => {
+const main = async () => {
     // while (true) {
     //     await tradeBot()
     //     await delay(60000)
@@ -91,158 +96,218 @@ const main = async() => {
 
 
 
-    const handleData = () => {
-        const groupedData = dummyData.reduce((acc, item) => {
-            const {chiNhanh, maNhapHang,thoiGian,maNhaCungCap, tongTienHang,ghiChu, tongSoLuong, maHang, imei, donGia, soLuong } = item;
-        
-            if (!acc[maNhapHang]) {
-                acc[maNhapHang] = {chiNhanh, maNhapHang,thoiGian,maNhaCungCap, tongTienHang, ghiChu, danhSachHang: [] };
-            }
-        
-            acc[maNhapHang].danhSachHang.push({ tongSoLuong,maHang, imei, donGia, soLuong,  });
-            
-            return acc;
-        }, {});
-        
-        const result = Object.values(groupedData);
+const handleData = () => {
+    const groupedData = dummyData.reduce((acc, item) => {
+        const { chiNhanh, maNhapHang, thoiGian, maNhaCungCap, tongTienHang, ghiChu, maHang, imei, donGia, soLuong } = item;
 
-        return result;
-    }
-    const getData = async() => {
-        const data = handleData()
-        for (const item of data) {
+        if (!acc[maNhapHang]) {
+            acc[maNhapHang] = { chiNhanh, maNhapHang, thoiGian, maNhaCungCap, tongTienHang, ghiChu, danhSachHang: [] };
+        }
+
+        acc[maNhapHang].danhSachHang.push({maHang, imei, donGia, soLuong, });
+
+        return acc;
+    }, {});
+
+    const result = Object.values(groupedData);
+
+
+    return result;
+}
+const getData = async () => {
+    const data = handleData()
+    for (const item of data) {
+
+        try {
             const cuaHang = fetchCuaHang(item.chiNhanh)
-            const nhaCungCap = fetchPhieuNhap(item.maNhaCungCap)
+            
             
             const gioHang = []
             let totalAmount = 0
             for (const element of item.danhSachHang) {
                 totalAmount += element.donGia * element.soLuong
                 const maHang = element.maHang.replace(/\\\\/g, "\\")
-                  const data = fetchDanhSachHang(maHang)
-                  gioHang.push(data.filter((item) => item.SKUCode.toLowerCase() == element.maHang.toLowerCase()))
+                
+                const data = await fetchDanhSachHang(encodeURIComponent(JSON.stringify(element.maHang)))
+                const detail = data
+                    .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
+                    .map(itemDetail => ({
+                        RefDetailID: v4(),
+                        RefI: "",
+                        InventoryItemID: itemDetail.InventoryItemID,
+                        InventoryItemName: itemDetail.InventoryItemName,
+                        StockID: cuaHang.StockID,
+                        StockName: cuaHang.StockName,
+                        SKUCode: itemDetail.SKUCode,
+                        UnitID: itemDetail.UnitID,
+                        UnitName: itemDetail.UnitName,
+                        Quantity: element.soLuong,
+                        QuantityDocument: 0,
+                        UnitPrice: element.donGia,
+                        Amount: element.donGia * element.soLuong,
+                        SortOrder: gioHang.length + 1,
+                        LotNo: "",
+                        ExpireDate: null,
+                        OutwardRefID: "",
+                        OutwardRefDetailID: "",
+                        IsAuditByValue: false,
+                        SalePrice: 0,
+                        AmountSalePrice: 0,
+                        BranchID: cuaHang.BranchID,
+                        ManageType: itemDetail.ManageType,
+                        FastUnitPrice: "",
+                        IsFromQuickSearch: true,
+                        StockLocationID: null,
+                        OriginalUnitID: itemDetail.UnitID,
+                        Serials: element?.imei,
+                        EditMode: 1,
+                        BakEditMode: 1,
+                        ListSerial: element?.imei?.includes(",") ? element.imei.split(",") : [element.imei] 
+                    }))
+                gioHang.push(detail[0])
+
+
             }
-
-            
-
+            const nhaCungCap = await fetchPhieuNhap(item.maNhaCungCap)
             const body = {
-                "RefID": "QLCH.model.business.INInward-2",
-                "RefType": 2095,
-                "RefTypeName": "",
-                "RefNo": item.maNhapHang,
-                "RefDate": moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-                "RefTime": moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-                "BranchID": cuaHang.BranchID,
-                "BranchName": cuaHang.BranchName,
-                "ContactName": "",
-                "JournalMemo": item.ghiChu,
-                "CreatedDate": null,
-                "CreatedBy": "",
-                "ModifiedDate": null,
-                "ModifiedBy": "",
-                "AccountObjectID": nhaCungCap.ObjectDetailID,
-                "AccountObjectName": nhaCungCap.Name,
-                "EditVersion": "",
-                "TotalAmount": totalAmount,
-                "CARefDate": null,
-                "CARefNo": "",
-                "VendorName": "",
-                "ReceiverName": "",
-                "InvDate": null,
-                "CompanyTaxCode": "",
-                "PaymentType": "",
-                "IncludeInvoice": "",
-                "InvNo": "",
-                "Address": "",
-                "EmployeeID": "00000000-0000-0000-0000-000000000000",
-                "EmployeeName": "",
-                "OutwardRefID": "",
-                "OutwardRefNo": "",
-                "FromBranch": "",
-                "EditMode": 1,
-                "INInwardDetails": []
+                RefID: "QLCH.model.business.INInward-2",
+                RefType: 2095,
+                RefTypeName: "",
+                RefNo: item.maNhapHang,
+                RefDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+                RefTime: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+                BranchID: cuaHang.BranchID,
+                BranchName: cuaHang.BranchName,
+                ContactName: "",
+                JournalMemo: item.ghiChu,
+                CreatedDate: null,
+                CreatedBy: "",
+                ModifiedDate: null,
+                ModifiedBy: "",
+                AccountObjectID: nhaCungCap[0].ObjectDetailID,
+                AccountObjectName: nhaCungCap[0].Name,
+                EditVersion: "",
+                TotalAmount: totalAmount,
+                CARefDate: null,
+                CARefNo: "",
+                VendorName: "",
+                ReceiverName: "",
+                InvDate: null,
+                CompanyTaxCode: "",
+                PaymentType: "",
+                IncludeInvoice: "",
+                InvNo: "",
+                Address: "",
+                EmployeeID: "00000000-0000-0000-0000-000000000000",
+                EmployeeName: "",
+                OutwardRefID: "",
+                OutwardRefNo: "",
+                FromBranch: "",
+                EditMode: 1,
+                INInwardDetails: gioHang,
+                VoucherReferences: [],
+                IsFromBE: true
             }
-           
-          }
+            await saveData(body)
+        } catch (error) {
+            console.log(`error  ${error } when ${item.maNhapHang}` );
+            // continue
+        }
     }
+}
 
-    const fetchCuaHang = (chiNhanh) => {
-        cuaHang.forEach(element => {
-            if(element.BranchName == chiNhanh){
-                fetch("https://taodentest.mshopkeeper.vn/backendg1/api/Stocks?_dc=1740133834857&page=1&start=0&limit=50&filter=%5B%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Inactive%22%2C%22operator%22%3A0%2C%22value%22%3A0%2C%22type%22%3A7%7D%5D", {
-                    "headers": {
-                      "accept": "application/json",
-                      "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-                      "authorization": "Bearer ZWPdqcvs02sVYstrdyx7grXqWVnEUocGj7cMjkc6ZtWmoYC74xTEyjm3tL3DjQxrfXnyGkQIdxd7sT0HCRmejWK-FoDadgPbIevOEizzQPZ7t4GJ46cSwQEYgps8IYZPhkqlvjkKSI3aBltznoOUEhOwmCcysJVm1_rLCDjYJxi4Sq_YiDr1sDAaGeY3SMFw-b9HcJFGxaU_aRxJ8uPzycoRhgF2M-KZdpbScK09y_aiwvgUfNi_b9vwKji_JbsqRFwCycOVqX9dpnheS9wSuq9pYL0PIbtpGEbN6BzQn0YzLjxJQnOzQB6GPq7fa_HsgUITiYkd2jkLvYaK7NbY3JqOuJ5_eCbNJpf-YWNrAkr7KgfbOinOC_DAZqGLlBN1GOCRFw8N9vfoG3cgr9TpLnGJxPl7vuSSIXCyzWX2jaGn0Q8OojqSiBvJ56Y769wpPDVcdRZhch2TyR-s0r6zn2xeijd9sXq7USAoCVx5SZwHydbXUrkzat-NVekt4iCHL-3ffp8bsCuPmNGBEUxvgj-gxaadJelAe6Kd6KeqqKtfAnmpou1QG3PZmMBfrDZLvj6cX5EpP2DRFtseIJB1ZpGn_7SJX9uDIMONqKIOVjHQgaNX8wm5EyEb7KwZPRn-yDM2Gf8vkqJbQgGWfDkrsS8UQwNE8etU_bsKwKemH27v_MGZjKVippRED7gLwQBM962esUCUI3NoislL0ydtv9Rnry__iwvzrh80Ac9yJPFiDresgvrtRVbFsGupmmz0",
-                      "companycode": "taodentest",
-                      "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"",
-                      "sec-ch-ua-mobile": "?1",
-                      "sec-ch-ua-platform": "\"Android\"",
-                      "sec-fetch-dest": "empty",
-                      "sec-fetch-mode": "cors",
-                      "sec-fetch-site": "same-origin",
-                      "x-misa-branchid": "7c366055-6d2f-4992-92d3-54c77886d1b0",
-                      "x-misa-language": "vi-VN",
-                      "cookie": "_gid=GA1.2.405653036.1740037992; x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; taodentest_Token=7522c5a9517e4ba9b77e404973894324; TS01fe7274=019ba1692d9d327f3e8f9c3a426ba4a0e9659bc610d2657c0ceab270acf35d816396fffa9ed01a05043475199590f4ae41ddabf726; _ga=GA1.1.370415893.1740037992; _ga_YLF50693DS=GS1.1.1740133753.7.1.1740133757.0.0.0; _gat=1; _ga_D8GFJLDVNQ=GS1.2.1740130095.9.1.1740133834.0.0.0",
-                      "Referer": "https://taodentest.mshopkeeper.vn/main",
-                      "Referrer-Policy": "strict-origin-when-cross-origin"
-                    },
-                    "body": null,
-                    "method": "GET"
-                  });
-                return element
-            }
-        });
-    }
-    const fetchPhieuNhap = async(maNhaCungCap) => {
-        const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/ObjectDetails/GetObjectDetailPaging?_dc=1740111358157&query=%5B%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Code%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maNhaCungCap}%22%2C%22group%22%3A0%2C%22type%22%3A1%2C%22addition%22%3A2%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Name%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maNhaCungCap}%22%2C%22group%22%3A1%2C%22type%22%3A1%2C%22addition%22%3A2%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Tel%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maNhaCungCap}%22%2C%22group%22%3A2%2C%22type%22%3A1%2C%22addition%22%3A2%7D%5D&branchId=00000000-0000-0000-0000-000000000000&editMode=1&isIncludeVendor=true`, {
-            "headers": {
-              "accept": "application/json",
-              "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-              "authorization": "Bearer ZWPdqcvs02sVYstrdyx7grXqWVnEUocGj7cMjkc6ZtWmoYC74xTEyjm3tL3DjQxrfXnyGkQIdxd7sT0HCRmejWK-FoDadgPbIevOEizzQPZ7t4GJ46cSwQEYgps8IYZPhkqlvjkKSI3aBltznoOUEhOwmCcysJVm1_rLCDjYJxi4Sq_YiDr1sDAaGeY3SMFw-b9HcJFGxaU_aRxJ8uPzycoRhgF2M-KZdpbScK09y_aiwvgUfNi_b9vwKji_JbsqRFwCycOVqX9dpnheS9wSuq9pYL0PIbtpGEbN6BzQn0YzLjxJQnOzQB6GPq7fa_HsgUITiYkd2jkLvYaK7NbY3JqOuJ5_eCbNJpf-YWNrAkr7KgfbOinOC_DAZqGLlBN1GOCRFw8N9vfoG3cgr9TpLnGJxPl7vuSSIXCyzWX2jaGn0Q8OojqSiBvJ56Y769wpPDVcdRZhch2TyR-s0r6zn2xeijd9sXq7USAoCVx5SZwHydbXUrkzat-NVekt4iCHL-3ffp8bsCuPmNGBEUxvgj-gxaadJelAe6Kd6KeqqKtfAnmpou1QG3PZmMBfrDZLvj6cX5EpP2DRFtseIJB1ZpGn_7SJX9uDIMONqKIOVjHQgaNX8wm5EyEb7KwZPRn-yDM2Gf8vkqJbQgGWfDkrsS8UQwNE8etU_bsKwKemH27v_MGZjKVippRED7gLwQBM962esUCUI3NoislL0ydtv9Rnry__iwvzrh80Ac9yJPFiDresgvrtRVbFsGupmmz0",
-              "companycode": "taodentest",
-              "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"",
-              "sec-ch-ua-mobile": "?1",
-              "sec-ch-ua-platform": "\"Android\"",
-              "sec-fetch-dest": "empty",
-              "sec-fetch-mode": "cors",
-              "sec-fetch-site": "same-origin",
-              "x-misa-branchid": "3f83b38e-c3c8-4030-8dae-106ca1e00e77",
-              "x-misa-language": "vi-VN",
-              "cookie": "_gid=GA1.2.405653036.1740037992; x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; taodentest_Token=7522c5a9517e4ba9b77e404973894324; _ga=GA1.1.370415893.1740037992; _ga_YLF50693DS=GS1.1.1740103192.4.1.1740103773.0.0.0; _ga_D8GFJLDVNQ=GS1.2.1740109023.6.1.1740109023.0.0.0; TS01fe7274=019ba1692d7cecc4f6963cdc20f296aab761f63a00b1ce6d78e41c03d7aee1f6278e0ab99e40b1bf362c9d1914b33ab78afbdc6a16",
-              "Referer": "https://taodentest.mshopkeeper.vn/main",
-              "Referrer-Policy": "strict-origin-when-cross-origin"
-            },
-            "body": null,
-            "method": "GET"
-          });
-        const rs = await response.json();
-        return rs.Data
-    }
-    const fetchDanhSachHang = async(maHang) => {
-        const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/InventoryItems/GetItemPagingQuickSearch?_dc=1740113777131&inventoryItemCategoryID=994C6FE5-DA83-441B-A0E8-57A6FED98FB2&getUnit=3&isGetServiceItem=false&isGetSetItem=false&vendorID=00000000-0000-0000-0000-000000000000&page=1&start=0&limit=50&filter=%5B%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22SKUCode%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maHang}%22%2C%22type%22%3A1%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemNameNoAccent%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maHang}%22%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemName%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maHang}%22%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22UnitPrice%22%2C%22operator%22%3A0%2C%22value%22%3A99%2C%22type%22%3A7%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemType%22%2C%22operator%22%3A9%2C%22value%22%3A2%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemTypeSetFilter%22%2C%22operator%22%3A9%2C%22value%22%3A5%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%5D`, {
-            "headers": {
-              "accept": "application/json",
-              "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-              "authorization": "Bearer ZWPdqcvs02sVYstrdyx7grXqWVnEUocGj7cMjkc6ZtWmoYC74xTEyjm3tL3DjQxrfXnyGkQIdxd7sT0HCRmejWK-FoDadgPbIevOEizzQPZ7t4GJ46cSwQEYgps8IYZPhkqlvjkKSI3aBltznoOUEhOwmCcysJVm1_rLCDjYJxi4Sq_YiDr1sDAaGeY3SMFw-b9HcJFGxaU_aRxJ8uPzycoRhgF2M-KZdpbScK09y_aiwvgUfNi_b9vwKji_JbsqRFwCycOVqX9dpnheS9wSuq9pYL0PIbtpGEbN6BzQn0YzLjxJQnOzQB6GPq7fa_HsgUITiYkd2jkLvYaK7NbY3JqOuJ5_eCbNJpf-YWNrAkr7KgfbOinOC_DAZqGLlBN1GOCRFw8N9vfoG3cgr9TpLnGJxPl7vuSSIXCyzWX2jaGn0Q8OojqSiBvJ56Y769wpPDVcdRZhch2TyR-s0r6zn2xeijd9sXq7USAoCVx5SZwHydbXUrkzat-NVekt4iCHL-3ffp8bsCuPmNGBEUxvgj-gxaadJelAe6Kd6KeqqKtfAnmpou1QG3PZmMBfrDZLvj6cX5EpP2DRFtseIJB1ZpGn_7SJX9uDIMONqKIOVjHQgaNX8wm5EyEb7KwZPRn-yDM2Gf8vkqJbQgGWfDkrsS8UQwNE8etU_bsKwKemH27v_MGZjKVippRED7gLwQBM962esUCUI3NoislL0ydtv9Rnry__iwvzrh80Ac9yJPFiDresgvrtRVbFsGupmmz0",
-              "companycode": "taodentest",
-              "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"",
-              "sec-ch-ua-mobile": "?1",
-              "sec-ch-ua-platform": "\"Android\"",
-              "sec-fetch-dest": "empty",
-              "sec-fetch-mode": "cors",
-              "sec-fetch-site": "same-origin",
-              "x-misa-branchid": "7ff2b736-cd8f-408b-9a2c-1abaa132573f",
-              "x-misa-language": "vi-VN",
-              "cookie": "_gid=GA1.2.405653036.1740037992; x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; taodentest_Token=7522c5a9517e4ba9b77e404973894324; _ga=GA1.1.370415893.1740037992; _ga_YLF50693DS=GS1.1.1740112290.5.1.1740113349.0.0.0; _ga_D8GFJLDVNQ=GS1.2.1740112243.7.1.1740113352.0.0.0; TS01fe7274=019ba1692d3bf34063dc20473e6f0b43094955d66974e4378e22eb92bf040a577262ca9aeb2129d324821152d77d19d48efda5c80a",
-              "Referer": "https://taodentest.mshopkeeper.vn/main",
-              "Referrer-Policy": "strict-origin-when-cross-origin"
-            },
-            "body": null,
-            "method": "GET"
-          });   
-          const rs = await response.json();
-          return rs.Data
-    }
+const fetchCuaHang = (chiNhanh) => {
+    const result = cuaHang.find(element => element.BranchName.trim().toLowerCase() == chiNhanh.trim().toLowerCase());
+    return result
+}
+const fetchPhieuNhap = async (maNhaCungCap) => {
+    const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/ObjectDetails/GetObjectDetailPaging?_dc=1740143965499&query=%5B%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Code%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maNhaCungCap}%22%2C%22group%22%3A0%2C%22type%22%3A1%2C%22addition%22%3A2%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Name%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maNhaCungCap}%22%2C%22group%22%3A1%2C%22type%22%3A1%2C%22addition%22%3A2%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22isFilterRow%22%3Atrue%2C%22property%22%3A%22Tel%22%2C%22operator%22%3A1%2C%22value%22%3A%22${maNhaCungCap}%22%2C%22group%22%3A2%2C%22type%22%3A1%2C%22addition%22%3A2%7D%5D&branchId=00000000-0000-0000-0000-000000000000&editMode=1&isIncludeVendor=true`, {
+        "headers": {
+            "accept": "application/json",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "Connection": "keep-alive",
+            "authorization": `Bearer ${token}`,
+            "companycode": "taodentest",
+            "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-misa-branchid": "355ac2c1-e5e5-4dda-875c-c15cfd1b540d",
+            "x-misa-language": "vi-VN",
+            "cookie": "_gid=GA1.2.1805397636.1740064661; x-deviceid=1fa93391747741088caf19ef50d2f6c2; ASP.NET_SessionId=q4fnao0uov4d4zercdebf04j; taodentest_Token=c4cb99497a42471ba9c3991b0833e0db; _ga=GA1.2.2089273383.1740064661; _ga_YLF50693DS=GS1.1.1740139652.2.1.1740139849.0.0.0; _ga_D8GFJLDVNQ=GS1.2.1740139695.2.1.1740141304.0.0.0; TS01fe7274=019ba1692db6afef0dd7b43485ebac65f756e3bfc91ea9a4413511982c2a0bfc55c30c7a630d2ee271cb22d6beb4523bb3f7951eb7",
+            "Referer": "https://taodentest.mshopkeeper.vn/main",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+        },
+        "body": null,
+        "method": "GET",
+        "agent": agent, // Gán agent để giữ kết nối
+    });
     
+    const rs = await response.json();
+    return rs.Data
+}
+const fetchDanhSachHang = async (maHang) => {
+    
+    const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/InventoryItems/GetItemPagingQuickSearch?_dc=1740369237936&inventoryItemCategoryID=994C6FE5-DA83-441B-A0E8-57A6FED98FB2&getUnit=3&isGetServiceItem=false&isGetSetItem=false&vendorID=00000000-0000-0000-0000-000000000000&page=1&start=0&limit=50&filter=%5B%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22SKUCode%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemNameNoAccent%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemName%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22UnitPrice%22%2C%22operator%22%3A0%2C%22value%22%3A-1%2C%22type%22%3A7%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemType%22%2C%22operator%22%3A9%2C%22value%22%3A2%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemTypeSetFilter%22%2C%22operator%22%3A9%2C%22value%22%3A5%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%5D`, {
+        "headers": {
+          "accept": "application/json",
+          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+          "authorization": `Bearer ${token}`,
+          "companycode": "taodentest",
+          "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"",
+          "sec-ch-ua-mobile": "?1",
+          "sec-ch-ua-platform": "\"Android\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+          "x-misa-branchid": "4173f24c-800f-40dc-a2b8-642e52239902",
+          "x-misa-language": "vi-VN",
+          "cookie": "x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; _gid=GA1.2.1900814718.1740360132; taodentest_Token=afd48085388b4166a1a96e2854d28006; _ga=GA1.1.370415893.1740037992; _ga_D8GFJLDVNQ=GS1.2.1740364977.11.1.1740366740.0.0.0; _ga_YLF50693DS=GS1.1.1740365582.9.1.1740366743.0.0.0; TS01fe7274=019ba1692db4570a0c36c1e37baec0635ee5228e5f65b263d1aa3d13c1758eb13ed5ccb6e6a7ccc96897f4807fb00a7ebae7626ae8",
+          "Referer": "https://taodentest.mshopkeeper.vn/main",
+          "Referrer-Policy": "strict-origin-when-cross-origin"
+        },
+        "body": null,
+        "method": "GET",
+        "agent": agent, // Gán agent để giữ kết nối
+      });
+   
+    const rs = await response.json();
+    
+    return rs.Data
+}
+
+const saveData = async (body) => {
+   
+    const response = await fetch("https://taodentest.mshopkeeper.vn/backendg1/api/INInwards", {
+        "headers": {
+            "accept": "application/json",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "Connection": "keep-alive",
+            "authorization": `Bearer ${token}`,
+            "companycode": "taodentest",
+            "content-type": "application/json",
+            "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-misa-branchid": "06b9265d-b3c3-470a-ad58-34f019424c90",
+            "x-misa-language": "vi-VN",
+            "cookie": "_gid=GA1.2.1805397636.1740064661; x-deviceid=1fa93391747741088caf19ef50d2f6c2; ASP.NET_SessionId=q4fnao0uov4d4zercdebf04j; taodentest_Token=c4cb99497a42471ba9c3991b0833e0db; _ga=GA1.2.2089273383.1740064661; _ga_YLF50693DS=GS1.1.1740154099.3.1.1740155699.0.0.0; TS01fe7274=019ba1692dee36a0b76ac2e2da99d52eb357aeec5aa13d8743444598e77f318160c4da9bfbc9fc05b10862c17f6e9ddabcfc2f01d6; _gat=1; _ga_D8GFJLDVNQ=GS1.2.1740152457.3.1.1740157079.0.0.0",
+            "Referer": "https://taodentest.mshopkeeper.vn/main",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+        },
+        "body": JSON.stringify(body),
+        "method": "POST",
+        "agent": agent, // Gán agent để giữ kết nối
+    });
+    const rs = await response.json();
+    
+    rs.Code == 200 ? console.log("Phieu nhap thanh cong: ", body.RefNo) : console.log("Phieu nhap loi: ", body.RefNo);
+
+}
+
 main()
