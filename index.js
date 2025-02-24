@@ -93,8 +93,8 @@ const main = async () => {
     //     await delay(60000)
     // }
 
-    // getData()
-    handleDataBill()
+    getData()
+
 }
 
 
