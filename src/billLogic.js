@@ -1,0 +1,111 @@
+
+
+import moment from "moment"
+import { v4 } from "uuid" 
+import  { data, jsonString }  from "./bill.js";
+
+export const handleDataBill = () => {
+    try {
+        // Loại bỏ escape characters bằng cách replace `\\"` thành `"`, sau đó parse JSON
+        const cleanedJsonString = jsonString.replace(/\\"/g, '"');
+        const dataObject = JSON.parse(cleanedJsonString);
+        
+        console.log(dataObject.SAInvoiceDetails[0]);
+    } catch (error) {
+        console.error("Lỗi parse JSON:", error);
+    }
+}
+
+const body = {
+    EditMode: 1,
+    TotalItemAmount: 0,
+    TotalItem: 1,
+    ReceiveAmount: 0,
+    CashAmount: 0,
+    RemainAmount: 0,
+    CardAmount: 0,
+    TotalAmount: 0,
+    RefType: 550,
+    DiscountAmount: 0,
+    VATAmount: 0,
+    DeliveryAmount: 0,
+    PointAmount: 0,
+    ReturnExchangeAmount: 0,
+    TotalItemDiscountAmount: 0,
+    DepositAmount: 0,
+    TotalCoupon: 0,
+    ChangeAmount: 0,
+    NotTakeChangeAmount: 0,
+    ChangeDeductedAmount: 0,
+    TaxAmount: 0,
+    PreOrder: 0,
+    SaleChannelID: '00000000-0000-0000-0000-000000000000',
+    SaleChannelName: 'Tại cửa hàng',
+    EmployeeName: '',
+    EmployeeCode: '',
+    EmployeeID: '',
+    EmployeeMobile: '',
+    EmployeeEmail: '',
+    isCopyData: true,
+    IsTaxReduction: false,
+    BranchID: '3f83b38e-c3c8-4030-8dae-106ca1e00e77',
+    IsPointPromotion: true,
+    RefID: '5bc50a0b-3ff5-4022-83c1-4469cc9ec0bc',
+    LogID: 'a7fcae5c-a346-4987-a1d3-bcd227ccc1a2',
+    UnitPriceType: 2,
+    ServiceTaxRate: 10,
+    IsApplyTax: true,
+    TotalItemReturnAmount: 0,
+    TotalItemAmountReturnWithDisCount: 0,
+    TaxReductionAmount: 0,
+    TotalItemAmountBeforeTax: 0,
+    TotalItemDiscountAmountBeforeTax: 0,
+    DiscountAmountBeforeTax: 0,
+    IsErrorPointAmount: false,
+    DeliveryAmountBeforeTax: 0,
+    ReturnExchangeAmountBeforeTax: 0,
+    TotalActualAmount: 0,
+    TotalReceipt: 0,
+    DebtReductionAmount: 0,
+    DebitAmount: 0,
+    MemberLevelName: '',
+    MemberLevelID: null,
+    MembershipID: null,
+    MembershipCode: null,
+    UsedPoint: 0,
+    Point: 0,
+    AddPoint: 0,
+    AvailablePoint: 0,
+    PointPromotionAmount: 0,
+    TotalDebitAmount: 0,
+    CustomerID: '0086be6e-6883-474f-af4f-a78a7a27cb34',
+    CustomerCode: '0964950216',
+    CustomerName: 'Đỗ Trà My',
+    CustomerTel: '0964950216',
+    Gender: 2,
+    PaymentStatus: 3,
+    FunctionInvoice: 6,
+    RefDate: '2025-02-24T23:09:59+07:00',
+    CreateInvoiceDate: '2025-02-24T23:09:59+07:00',
+    CompleteInvoiceDate: '2025-02-24T23:09:59+07:00',
+    CashierID: '5c67b1b9-8987-4da8-9f14-89a80dc1aacc',
+    DeviceID: '5c67b1b9-8987-4da8-9f14-89a80dc1aacc',
+    CashierTel: '0374032846',
+    CashierName: 'Táo Đen Test',
+    CashierEmail: 'phuongthuy11102000@gmail.com',
+    IsCOD: false,
+    PromotionID: '',
+    PromotionName: '',
+    DiscountRate: 0,
+    VoucherAmount: 0,
+    CouponDiscountAmount: 0,
+    CardRank: '',
+    PaymentTerm: null,
+    SAInvoiceDetails: [ [Object] ],
+    SAInvoicePayments: [],
+    SAInvoiceCoupons: [],
+    SAInvoiceExtensions: [],
+    SAInvoiceDebitDetails: [],
+    EcomMappings: [],
+    EInvoices: []
+  }
