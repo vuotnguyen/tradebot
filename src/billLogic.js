@@ -2,19 +2,36 @@
 
 import moment from "moment"
 import { v4 } from "uuid" 
-import  { data, detail1, detailString, jsonString }  from "./bill.js";
+import  { data, detail1, detailString, jsonString, body1 }  from "./bill.js";
+import { dataBill } from "./billData.js";
 
 export const handleDataBill = () => {
-    try {
-        // Loại bỏ escape characters bằng cách replace `\\"` thành `"`, sau đó parse JSON
-        const cleanedJsonString = jsonString.replace(/\\"/g, '"');
-        const dataObject = JSON.parse(cleanedJsonString);
-        const detailObject = JSON.parse(detail1.replace(/\\"/g, '"'));
+    const groupedData = dataBill.reduce((acc, item) => {
+        const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
+
+        if (!acc[maHoaDon]) {
+            acc[maHoaDon] = { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, danhSachHang: [] };
+        }
+
+        acc[maHoaDon].danhSachHang.push({maHang, imei, donGia, soLuong,giamGiaHangHoa,giaBan, thanhTien });
+
+        return acc;
+    }, {});
+
+    const result = Object.values(groupedData);
+    console.log(result);
+
+    return result;
+    // try {
+    //     // Loại bỏ escape characters bằng cách replace `\\"` thành `"`, sau đó parse JSON
+    //     const cleanedJsonString = jsonString.replace(/\\"/g, '"');
+    //     const dataObject = JSON.parse(cleanedJsonString);
+    //     const detailObject = JSON.parse(detail1.replace(/\\"/g, '"'));
         
-        console.log(dataObject);
-    } catch (error) {
-        console.error("Lỗi parse JSON:", error);
-    }
+    //     console.log(dataObject);
+    // } catch (error) {
+    //     console.error("Lỗi parse JSON:", error);
+    // }
 }
 
 const handleData = () => {
@@ -90,7 +107,7 @@ const saveBill = async(body) => {
           "Referer": "https://taodentest.mshopkeeper.vn/salecloudg1/",
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
-        "body": ,
+        "body": body,
         "method": "POST"
       });
 }
