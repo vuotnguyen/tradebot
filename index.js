@@ -7,7 +7,7 @@ import { cuaHang } from "./src/cuaHang.js";
 import { v4 } from "uuid"
 
 import { Agent } from "https"; // Dùng `http` nếu API là HTTP
-import { handleDataBill } from "./src/billLogic.js";
+import { jobSaveBill } from "./src/billLogic.js";
 
 const agent = new Agent({ keepAlive: true });
 
@@ -94,7 +94,7 @@ const main = async () => {
     // }
 
     // getData()
-    handleDataBill()
+    jobSaveBill()
 
 }
 
