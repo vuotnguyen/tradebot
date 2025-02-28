@@ -2,8 +2,11 @@
 import subprocess
 
 import os
-from google import genai
+
+import google.generativeai
+print("Google Generative AI đã được cài đặt thành công!")
 # from openai import OpenAI
+from google import genai
 
 
 # geminiAI
