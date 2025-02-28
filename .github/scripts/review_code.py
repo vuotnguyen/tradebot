@@ -38,7 +38,7 @@ for file in changed_files:
             contents=prompt
         )
 
-        review_comments.append(f"### Review for `{file}`:\n" + response["choices"][0]["message"]["content"])
+        review_comments.append(f"### Review for `{file}`:\n" + response.text)
 
 # Ghi review vào file để GitHub Actions có thể hiển thị
 with open(os.getenv("GITHUB_STEP_SUMMARY"), "w") as summary_file:
