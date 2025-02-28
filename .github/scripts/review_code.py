@@ -2,8 +2,9 @@
 import subprocess
 
 import os
-# from openai import OpenAI
 from google import genai
+# from openai import OpenAI
+
 
 # geminiAI
 client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
