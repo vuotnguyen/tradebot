@@ -93,6 +93,8 @@ export const jobSaveBill = async () => {
             AllocationPointAmountBeforeTax: 0,//?
             AmountBeforeTax: element.donGia * 0.9,//?
             TaxAmount: 0,//?
+            enableDescription: true, 
+            Description: item.maHoaDon,
             Serials: element.imei,
             ItemEditType: 0,
             RefID: uuid, //?

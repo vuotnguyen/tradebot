@@ -93,8 +93,8 @@ const main = async () => {
     //     await delay(60000)
     // }
 
-    getData()
-    // jobSaveBill()
+    // getData()
+    jobSaveBill()
 
 }
 
@@ -172,14 +172,14 @@ const getData = async () => {
 
 
             }
-            const nhaCungCap = await fetchPhieuNhap(cuaHang.BranchID,item.maNhaCungCap)
+            const nhaCungCap = item.maNhaCungCap ? await fetchPhieuNhap(cuaHang.BranchID,item.maNhaCungCap) : []
             const body = {
                 RefID: "QLCH.model.business.INInward-2",
                 RefType: 2095,
                 RefTypeName: "",
                 RefNo: item.maNhapHang,
-                RefDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-                RefTime: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+                RefDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT01:00:00"),
+                RefTime: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT01:00:00"),
                 BranchID: cuaHang.BranchID,
                 BranchName: cuaHang.BranchName,
                 ContactName: "",
@@ -188,8 +188,8 @@ const getData = async () => {
                 CreatedBy: "",
                 ModifiedDate: null,
                 ModifiedBy: "",
-                AccountObjectID: nhaCungCap[0].ObjectDetailID,
-                AccountObjectName: nhaCungCap[0].Name,
+                AccountObjectID: nhaCungCap[0]?.ObjectDetailID,
+                AccountObjectName: nhaCungCap[0]?.Name,
                 EditVersion: "",
                 TotalAmount: totalAmount,
                 CARefDate: null,
