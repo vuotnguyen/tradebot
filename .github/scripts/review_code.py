@@ -2,7 +2,7 @@
 import subprocess
 
 import os
-from openai import OpenAI
+# from openai import OpenAI
 from google import genai
 
 # geminiAI
