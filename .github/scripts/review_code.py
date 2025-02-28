@@ -33,9 +33,9 @@ for file in changed_files:
 
         prompt = f"Review the following code and suggest improvements:\n\n{code}"
 
-        response = client.chat.completions.create(
+        response = client.models.generate_content(
             model="gemini-2.0-flash",
-            messages=[{"role": "user", "content": prompt}]
+            contents=prompt
         )
 
         review_comments.append(f"### Review for `{file}`:\n" + response["choices"][0]["message"]["content"])
