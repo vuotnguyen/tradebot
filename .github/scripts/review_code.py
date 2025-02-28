@@ -3,8 +3,7 @@ import subprocess
 
 import os
 
-import google.generativeai
-print("Google Generative AI đã được cài đặt thành công!")
+
 # from openai import OpenAI
 from google import genai
 
