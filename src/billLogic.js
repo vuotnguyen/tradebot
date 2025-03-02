@@ -3,11 +3,29 @@
 import moment from "moment"
 import { v4 } from "uuid"
 import { store } from "./bill.js";
-import { dataBill } from "./billData.js";
 import { token } from "./data.js";
+import excelToJson from "convert-excel-to-json";
 
- const handleDataBill = () => {
-  const groupedData = dataBill.reduce((acc, item) => {
+const handleDataBill = () => {
+  const rs = excelToJson({sourceFile: "data/caugiay1.xlsx", columnToKey: {
+    A: 'chiNhanh',
+    B: 'maHoaDon',
+    C: 'thoiGian',
+    D: 'maKhachHang',
+    E: 'ghiChu',
+    F: 'giamGiaHoaDon',
+    G: 'tongTien',
+    H: 'maHang',
+    I: 'imei',
+    J: 'soLuong',
+    K: 'donGia',
+    L: 'giamGiaHangHoa',
+    M: 'giaBan',
+    N: 'thanhTien'
+}})
+
+  
+  const groupedData = rs.sheetTwo.reduce((acc, item) => {
     const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
 
     if (!acc[maHoaDon]) {
@@ -24,189 +42,192 @@ import { token } from "./data.js";
   return result;
 }
 
-const generateRandomString = (length = 9) =>  {
+const generateRandomString = (length = 9) => {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789"; // Chữ cái + số
   let result = "";
-  
+
   for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * chars.length);
-      result += chars[randomIndex];
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars[randomIndex];
   }
-  
+
   return result;
 }
 
 export const jobSaveBill = async () => {
   const dataBill = handleDataBill()
+  
   for (const item of dataBill) {
-    const gioHang = []
-    let totalAmount = 0
-    const uuid = v4()
-    for (const element of item.danhSachHang) {
-      const timestamp = Date.now();
-      const maHang = element.maHang.replace(/\\\\/g, "\\")
-      const data = await fetchHangHoa(store.BranchID, encodeURIComponent(JSON.stringify(element.maHang)))
-      
-      const detail = data
-        .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
-        .map(itemDetail => (
-          {
-            CODE: `MISA_${generateRandomString(9)}_${timestamp}`, // ?
-            InventoryItemID: itemDetail.InventoryItemID,
-            SKUCode: itemDetail.SKUCode,
-            InventoryItemName: itemDetail.InventoryItemName,
-            Quantity: element.soLuong,
-            UnitID: itemDetail.UnitID,
-            UnitName: itemDetail.UnitName,
-            UnitPrice: element.donGia,
-            Amount: element.donGia * element.soLuong,
-            DiscountRate: 0,
-            DiscountAmount: element.giamGiaHangHoa,
-            errorQuantity: false,
-            RefDetailType: 1,
-            Weight: 0,
-            ConvertRate: 1,
-            EditMode: 1,
-            InventoryItemType: 1,
-            UnitPriceDefault: element.donGia,
-            UnitPriceOld: element.donGia,
-            CostPrice: 0,
-            CloseQuantityDefault: 2,
-            Color: "",
-            Size: "",
-            ColourCode: "",
-            selectedSerial: element?.imei?.includes(",") ? element.imei.split(",") : [element.imei],
-            selectedAllSerial: element?.imei?.includes(",") ? element.imei.split(",") : [element.imei],
-            ManageType: 2,
-            InventoryItemParent: "00000000-0000-0000-0000-000000000000",
-            TaxRate: 10,
-            UnitPriceBeforeTax: element.donGia * 0.9,
-            Barcode: itemDetail.Barcode,
-            TotalAmount: element.thanhTien,
-            SortOrder: gioHang.length + 1,
-            QuantityRoot: 1,
-            DiscountAmountBeforeTax: element * 0.1,
-            FeeReturnValue: 0,
-            AllocationAmount: 0, // ?
-            AllocationAmountBeforeTax: 0, //?
-            AllocationPointAmount: 0,//?
-            AllocationPointAmountBeforeTax: 0,//?
-            AmountBeforeTax: element.donGia * 0.9,//?
-            TaxAmount: 0,//?
-            enableDescription: true, 
-            Description: item.maHoaDon,
-            Serials: element.imei,
-            ItemEditType: 0,
-            RefID: uuid, //?
-            RefDetailID: v4() //?
-          }
-        ))
-      gioHang.push(detail[0])
-    }
-    const khachHang = await fetchKhachHang(item.maKhachHang)
-    
-    const bill = {
-      maHoaDon: item.maHoaDon,
-      EditMode: 1,
-      TotalItemAmount: item.tongTien,
-      TotalItem: gioHang.length + 1,
-      ReceiveAmount: item.tongTien,
-      CashAmount: item.tongTien,
-      RemainAmount: 0,
-      CardAmount: 0,
-      TotalAmount: item.tongTien,
-      RefType: 550,
-      DiscountAmount: item.giamGiaHoaDon,
-      VATAmount: 0,
-      DeliveryAmount: 0,
-      PointAmount: 0,
-      ReturnExchangeAmount: 0,
-      TotalItemDiscountAmount: 0,
-      DepositAmount: 0,
-      TotalCoupon: 0,
-      ChangeAmount: 0,
-      NotTakeChangeAmount: 0,
-      ChangeDeductedAmount: 0,
-      TaxAmount: 0,
-      PreOrder: 0,
-      SaleChannelID: "00000000-0000-0000-0000-000000000000",
-      SaleChannelName: "Tại cửa hàng",
-      EmployeeName: "",
-      EmployeeCode: "",
-      EmployeeID: "",
-      EmployeeMobile: "",
-      EmployeeEmail: "",
-      isCopyData: true,
-      IsTaxReduction: false,
-      BranchID: store.BranchID,
-      IsPointPromotion: false,
-      RefID: uuid,//?
-      LogID: "",//?
-      UnitPriceType: 2,
-      ServiceTaxRate: 10,
-      IsApplyTax: true,
-      Description: item.ghiChu,
-      TotalItemReturnAmount: 0,
-      TotalItemAmountReturnWithDisCount: 0,
-      TaxReductionAmount: 0,
-      TotalItemAmountBeforeTax: 0,
-      TotalItemDiscountAmountBeforeTax: 0,
-      DiscountAmountBeforeTax: 0,
-      IsErrorPointAmount: false,
-      DeliveryAmountBeforeTax: 0,
-      ReturnExchangeAmountBeforeTax: 0,
-      TotalActualAmount: item.tongTien,
-      DebtReductionAmount: 0,
-      TotalReceipt: 0,
-      PromotionID: "",
-      PromotionName: "Giảm giá trực tiếp - beyonce testttttt",
-      DiscountRate: 0,
-      ScopeOfApplication: 1,
-      sainvoiceCouponDetails: [],
-      TotalDebitAmount: 0,
-      CustomerID: khachHang?.CustomerID,
-      CustomerCode: khachHang?.CustomerCode,
-      CustomerAddress: khachHang?.CustomerAddress,
-      CustomerName: khachHang?.CustomerName,
-      CustomerTel: khachHang?.CustomerTel,
-      Gender: khachHang?.Gender,
-      MembershipID: null,
-      MembershipCode: null,
-      MemberLevelID: null,
-      DebitAmount: 0,
-      PaymentStatus: 3,
-      FunctionInvoice: 6,
-      RefDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-      CreateInvoiceDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-      CompleteInvoiceDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-      CashierID: "5c67b1b9-8987-4da8-9f14-89a80dc1aacc",
-      DeviceID: "5c67b1b9-8987-4da8-9f14-89a80dc1aacc",
-      CashierTel: "0374032846",
-      CashierName: "Táo Đen Test",
-      CashierEmail: "phuongthuy11102000@gmail.com",
-      VoucherAmount: 0,
-      CouponDiscountAmount: 0,
-      CardRank: "",
-      PaymentTerm: null,
-      SAInvoiceDetails: gioHang,
-      SAInvoicePayments: [],
-      SAInvoiceCoupons: [],
-      SAInvoiceExtensions: [],
-      SAInvoiceDebitDetails: [],
-      EcomMappings: [],
-      EInvoices: []
-    }
-    const body = {
-      BranchID: store.BranchID,
-      ClientID: "SaleCloud",
-      CompanyCode: "taodentest",
-      CreatedDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
-      UploadData: JSON.stringify([bill])
-    }
+    try {
+      const gioHang = []
+      let totalAmount = 0
+      const uuid = v4()
+      for (const element of item.danhSachHang) {
+        const timestamp = Date.now();
+        const maHang = element.maHang.replace(/\\\\/g, "\\")
+        const data = await fetchHangHoa(store.BranchID, encodeURIComponent(JSON.stringify(element.maHang)))
 
-    
-    
-    await saveBill(body)
+        const detail = data
+          .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
+          .map(itemDetail => (
+            {
+              CODE: `MISA_${generateRandomString(9)}_${timestamp}`, // ?
+              InventoryItemID: itemDetail.InventoryItemID,
+              SKUCode: itemDetail.SKUCode,
+              InventoryItemName: itemDetail.InventoryItemName,
+              Quantity: element.soLuong,
+              UnitID: itemDetail.UnitID,
+              UnitName: itemDetail.UnitName,
+              UnitPrice: element.donGia,
+              Amount: element.donGia * element.soLuong,
+              DiscountRate: 0,
+              DiscountAmount: element.giamGiaHangHoa,
+              errorQuantity: false,
+              RefDetailType: 1,
+              Weight: 0,
+              ConvertRate: 1,
+              EditMode: 1,
+              InventoryItemType: 1,
+              UnitPriceDefault: element.donGia,
+              UnitPriceOld: element.donGia,
+              CostPrice: 0,
+              CloseQuantityDefault: 2,
+              Color: "",
+              Size: "",
+              ColourCode: "",
+              selectedSerial: element?.imei?.includes(",") ? element.imei.split(",") : [element.imei],
+              selectedAllSerial: element?.imei?.includes(",") ? element.imei.split(",") : [element.imei],
+              ManageType: 2,
+              InventoryItemParent: "00000000-0000-0000-0000-000000000000",
+              TaxRate: 10,
+              UnitPriceBeforeTax: element.donGia * 0.9,
+              Barcode: itemDetail.Barcode,
+              TotalAmount: element.thanhTien,
+              SortOrder: gioHang.length + 1,
+              QuantityRoot: 1,
+              DiscountAmountBeforeTax: element * 0.1,
+              FeeReturnValue: 0,
+              AllocationAmount: 0, // ?
+              AllocationAmountBeforeTax: 0, //?
+              AllocationPointAmount: 0,//?
+              AllocationPointAmountBeforeTax: 0,//?
+              AmountBeforeTax: element.donGia * 0.9,//?
+              TaxAmount: 0,//?
+              enableDescription: true,
+              Description: item.maHoaDon,
+              Serials: element.imei,
+              ItemEditType: 0,
+              RefID: uuid, //?
+              RefDetailID: v4() //?
+            }
+          ))
+        gioHang.push(detail[0])
+      }
+      const khachHang = await fetchKhachHang(item.maKhachHang)
+
+      const bill = {
+        maHoaDon: item.maHoaDon,
+        EditMode: 1,
+        TotalItemAmount: item.tongTien,
+        TotalItem: gioHang.length + 1,
+        ReceiveAmount: item.tongTien,
+        CashAmount: item.tongTien,
+        RemainAmount: 0,
+        CardAmount: 0,
+        TotalAmount: item.tongTien,
+        RefType: 550,
+        DiscountAmount: item.giamGiaHoaDon,
+        VATAmount: 0,
+        DeliveryAmount: 0,
+        PointAmount: 0,
+        ReturnExchangeAmount: 0,
+        TotalItemDiscountAmount: 0,
+        DepositAmount: 0,
+        TotalCoupon: 0,
+        ChangeAmount: 0,
+        NotTakeChangeAmount: 0,
+        ChangeDeductedAmount: 0,
+        TaxAmount: 0,
+        PreOrder: 0,
+        SaleChannelID: "00000000-0000-0000-0000-000000000000",
+        SaleChannelName: "Tại cửa hàng",
+        EmployeeName: "",
+        EmployeeCode: "",
+        EmployeeID: "",
+        EmployeeMobile: "",
+        EmployeeEmail: "",
+        isCopyData: true,
+        IsTaxReduction: false,
+        BranchID: store.BranchID,
+        IsPointPromotion: false,
+        RefID: uuid,//?
+        LogID: "",//?
+        UnitPriceType: 2,
+        ServiceTaxRate: 10,
+        IsApplyTax: true,
+        Description: item.ghiChu,
+        TotalItemReturnAmount: 0,
+        TotalItemAmountReturnWithDisCount: 0,
+        TaxReductionAmount: 0,
+        TotalItemAmountBeforeTax: 0,
+        TotalItemDiscountAmountBeforeTax: 0,
+        DiscountAmountBeforeTax: 0,
+        IsErrorPointAmount: false,
+        DeliveryAmountBeforeTax: 0,
+        ReturnExchangeAmountBeforeTax: 0,
+        TotalActualAmount: item.tongTien,
+        DebtReductionAmount: 0,
+        TotalReceipt: 0,
+        PromotionID: "",
+        PromotionName: "Giảm giá trực tiếp - beyonce testttttt",
+        DiscountRate: 0,
+        ScopeOfApplication: 1,
+        sainvoiceCouponDetails: [],
+        TotalDebitAmount: 0,
+        CustomerID: khachHang?.CustomerID,
+        CustomerCode: khachHang?.CustomerCode,
+        CustomerAddress: khachHang?.CustomerAddress,
+        CustomerName: khachHang?.CustomerName,
+        CustomerTel: khachHang?.CustomerTel,
+        Gender: khachHang?.Gender,
+        MembershipID: null,
+        MembershipCode: null,
+        MemberLevelID: null,
+        DebitAmount: 0,
+        PaymentStatus: 3,
+        FunctionInvoice: 6,
+        RefDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+        CreateInvoiceDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+        CompleteInvoiceDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+        CashierID: "5c67b1b9-8987-4da8-9f14-89a80dc1aacc",
+        DeviceID: "5c67b1b9-8987-4da8-9f14-89a80dc1aacc",
+        CashierTel: "0374032846",
+        CashierName: "Táo Đen Test",
+        CashierEmail: "phuongthuy11102000@gmail.com",
+        VoucherAmount: 0,
+        CouponDiscountAmount: 0,
+        CardRank: "",
+        PaymentTerm: null,
+        SAInvoiceDetails: gioHang,
+        SAInvoicePayments: [],
+        SAInvoiceCoupons: [],
+        SAInvoiceExtensions: [],
+        SAInvoiceDebitDetails: [],
+        EcomMappings: [],
+        EInvoices: []
+      }
+      const body = {
+        BranchID: store.BranchID,
+        ClientID: "SaleCloud",
+        CompanyCode: "taodentest",
+        CreatedDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
+        UploadData: JSON.stringify([bill])
+      }
+      await saveBill(body, item.maHoaDon)
+    } catch (error) {
+        console.log(`phieu xuat ${item.maHoaDon} loi:  ${item.maHoaDon}`);
+        
+    }
   }
 }
 
@@ -261,7 +282,7 @@ const fetchKhachHang = async (maKhachHang) => {
   return rs.Data[0]
 }
 
-const saveBill = async (body) => {
+const saveBill = async (body, maHoaDon) => {
   const response = await fetch("https://taodentest.mshopkeeper.vn/salecloud/uploadg1/SAInvoice/save-sync", {
     "headers": {
       "accept": "application/json, text/plain, */*",
@@ -285,9 +306,9 @@ const saveBill = async (body) => {
     "body": JSON.stringify(body),
     "method": "POST"
   });
-  
+
   const rs = await response.json();
-  rs.Code == 200 && rs.Success == true ? console.log("Phieu xuat hoa don thanh cong: ", rs ) : console.log("Phieu xuat loi: ", rs);
+  rs.Code == 200 && rs.Success == true ? console.log("Phieu xuat hoa don thanh cong: ", rs.Data.RefNo) : console.log("Phieu xuat loi: ", maHoaDon);
 }
 
 const body = {
