@@ -2,12 +2,13 @@
 
 import moment from "moment"
 import { v4 } from "uuid"
-import { store } from "./bill.js";
+// import { store } from "./bill.js";
 import { token } from "./data.js";
 import excelToJson from "convert-excel-to-json";
+import { cuaHang } from "./cuaHang.js";
 
 const handleDataBill = () => {
-  const rs = excelToJson({sourceFile: "data/quangtrung.xlsx", columnToKey: {
+  const rs = excelToJson({sourceFile: "data/tranquangkhai.xlsx", columnToKey: {
     A: 'chiNhanh',
     B: 'maHoaDon',
     C: 'thoiGian',
@@ -59,6 +60,7 @@ export const jobSaveBill = async () => {
   
   for (const item of dataBill) {
     try {
+      const store = cuaHang.find((element) => element.BranchName == item.chiNhanh)
       const gioHang = []
       let totalAmount = 0
       const uuid = v4()
@@ -66,7 +68,8 @@ export const jobSaveBill = async () => {
         const timestamp = Date.now();
         const maHang = element.maHang.replace(/\\\\/g, "\\")
         const data = await fetchHangHoa(store.BranchID, encodeURIComponent(JSON.stringify(element.maHang)))
-
+ 
+        
         const detail = data
           .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
           .map(itemDetail => (
@@ -223,7 +226,8 @@ export const jobSaveBill = async () => {
         CreatedDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT00:00:00"),
         UploadData: JSON.stringify([bill])
       }
-      await saveBill(body, item.maHoaDon)
+      await saveBill(store.BranchID,body, item.maHoaDon)
+     
     } catch (error) {
         console.log(`phieu xuat ${item.maHoaDon} loi:  ${error}`);
         
@@ -254,6 +258,7 @@ const fetchHangHoa = async (branchId, maHangHoa) => {
     "method": "GET"
   });
   const rs = await response.json();
+  console.log(`hang hoa:  ${JSON.stringify(rs.Data)}`);
   return rs.Data
 }
 
@@ -282,7 +287,7 @@ const fetchKhachHang = async (maKhachHang) => {
   return rs.Data[0]
 }
 
-const saveBill = async (body, maHoaDon) => {
+const saveBill = async (branchID,body, maHoaDon) => {
   const response = await fetch("https://taodentest.mshopkeeper.vn/salecloud/uploadg1/SAInvoice/save-sync", {
     "headers": {
       "accept": "application/json, text/plain, */*",
@@ -296,7 +301,7 @@ const saveBill = async (body, maHoaDon) => {
       "sec-fetch-dest": "empty",
       "sec-fetch-mode": "cors",
       "sec-fetch-site": "same-origin",
-      "x-misa-branchid": store.BranchID,
+      "x-misa-branchid": branchID,
       "x-misa-userid": "5c67b1b9-8987-4da8-9f14-89a80dc1aacc",
       "x-misa-username": "phuongthuy11102000",
       "cookie": "x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; _gid=GA1.2.1900814718.1740360132; taodentest_Token=41b54bbe4fb948cd9c841ed941308798; _ga_5RQ0H2DBF0=GS1.1.1740472865.2.1.1740473820.0.0.0; _ga_877E0J2DYM=GS1.1.1740472865.2.1.1740473820.0.0.0; _ga=GA1.1.370415893.1740037992; _ga_D8GFJLDVNQ=GS1.2.1740477376.18.1.1740478057.0.0.0; _ga_YLF50693DS=GS1.1.1740478725.17.0.1740478725.0.0.0; TS01fe7274=019ba1692d249ed0e1192b5433b1a34dedb286887bc5461bda5a5a8a996efed5e2af90f3d164af8c00346c62061f92ea24244d72d3",
