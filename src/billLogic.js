@@ -7,7 +7,7 @@ import { token } from "./data.js";
 import excelToJson from "convert-excel-to-json";
 
 const handleDataBill = () => {
-  const rs = excelToJson({sourceFile: "data/caugiay1.xlsx", columnToKey: {
+  const rs = excelToJson({sourceFile: "data/quangtrung.xlsx", columnToKey: {
     A: 'chiNhanh',
     B: 'maHoaDon',
     C: 'thoiGian',
@@ -225,7 +225,7 @@ export const jobSaveBill = async () => {
       }
       await saveBill(body, item.maHoaDon)
     } catch (error) {
-        console.log(`phieu xuat ${item.maHoaDon} loi:  ${item.maHoaDon}`);
+        console.log(`phieu xuat ${item.maHoaDon} loi:  ${error}`);
         
     }
   }

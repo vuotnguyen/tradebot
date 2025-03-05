@@ -13,7 +13,5 @@ export const SAInvoicePaymentsData = (tongTien) => {
     )
 }
 export const store = {
-   
-    BranchID: "06b9265d-b3c3-470a-ad58-34f019424c90",
-   
+    BranchID: "7c366055-6d2f-4992-92d3-54c77886d1b0",
 }
