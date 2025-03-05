@@ -1,0 +1,14 @@
+{
+    "validateParams": [
+        {
+            "InventoryItemID": "33eb7c14-61d6-49f3-9c8e-b19f7bd9964d",
+            "StockID": "ec0e03d1-116c-485b-8c28-11dd5f894b50",
+            "UnitID": "746ec67b-d56b-4df7-8187-2fb7fcf31216",
+            "Quantity": 1,
+            "Serials": "353104101789538"
+        }
+    ],
+    "refType": 1,
+    "refID": "QLCH.model.business.INInward-1",
+    "refDate": "2024-12-31T00:00:00"
+}

@@ -2,6 +2,7 @@
   "name": "tradebot",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,8 +12,11 @@
   "description": "",
   "dependencies": {
     "ccxt": "^4.4.46",
+    "convert-excel-to-json": "^1.7.0",
     "delay": "^6.0.0",
     "dotenv": "^16.4.7",
-    "moment": "^2.30.1"
+    "moment": "^2.30.1",
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
   }
 }

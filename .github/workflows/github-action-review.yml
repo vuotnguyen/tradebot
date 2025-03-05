@@ -19,9 +19,10 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install openai requests
+        run: pip install google-genai requests
 
       - name: Run ChatGPT Review
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python .github/scripts/review_code.py
