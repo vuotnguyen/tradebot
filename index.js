@@ -137,7 +137,7 @@ const getData = async () => {
                     .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
                     .map(itemDetail => ({
                         RefDetailID: v4(),
-                        RefI: "",
+                        RefID: "",
                         InventoryItemID: itemDetail.InventoryItemID,
                         InventoryItemName: itemDetail.InventoryItemName,
                         StockID: cuaHang.StockID,
@@ -178,8 +178,8 @@ const getData = async () => {
                 RefType: 2095,
                 RefTypeName: "",
                 RefNo: item.maNhapHang,
-                RefDate: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT01:00:00"),
-                RefTime: moment(item.thoiGian, "DD/MM/YYYY").format("YYYY-MM-DDT01:00:00"),
+                RefDate: moment(item.thoiGian, "DD/MM/YYYY HH:mm:ss").format("YYYY-MM-DD HH:mm:ss"),
+                RefTime: moment(item.thoiGian, "DD/MM/YYYY HH:mm:ss").format("YYYY-MM-DD HH:mm:ss"),
                 BranchID: cuaHang.BranchID,
                 BranchName: cuaHang.BranchName,
                 ContactName: "",
@@ -213,7 +213,7 @@ const getData = async () => {
                 IsFromBE: true
             }
             await saveData(cuaHang.BranchID,body)
-            // console.log(body);
+            // console.log(moment(item.thoiGian, "DD/MM/YYYY HH:mm:ss").format("YYYY-MM-DD HH:mm:ss"));
             
         } catch (error) {
             console.log(`error  ${error } when ${item.maNhapHang}` );
@@ -250,10 +250,12 @@ const fetchPhieuNhap = async (brandId, maNhaCungCap) => {
       });
 
     const rs = await response.json();
+    // console.log('fetch phieu nhap ', rs);
+    
     return rs.Data
 }
+
 const fetchDanhSachHang = async (branchID,maHang) => {
-    
     const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/InventoryItems/GetItemPagingQuickSearch?_dc=1740369237936&inventoryItemCategoryID=994C6FE5-DA83-441B-A0E8-57A6FED98FB2&getUnit=3&isGetServiceItem=false&isGetSetItem=false&vendorID=00000000-0000-0000-0000-000000000000&page=1&start=0&limit=50&filter=%5B%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22SKUCode%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemNameNoAccent%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemName%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22UnitPrice%22%2C%22operator%22%3A0%2C%22value%22%3A-1%2C%22type%22%3A7%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemType%22%2C%22operator%22%3A9%2C%22value%22%3A2%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemTypeSetFilter%22%2C%22operator%22%3A9%2C%22value%22%3A5%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%5D`, {
         "headers": {
           "accept": "application/json",
@@ -278,7 +280,6 @@ const fetchDanhSachHang = async (branchID,maHang) => {
       });
    
     const rs = await response.json();
-    
     return rs.Data
 }
 
@@ -309,7 +310,7 @@ const saveData = async (branchID,body) => {
         "agent": agent, // Gán agent để giữ kết nối
     });
     const rs = await response.json();
-    rs.Code == 200 ? console.log("Phieu nhap thanh cong: ", body.RefNo) : console.log("Phieu nhap loi: ", body.RefNo);
+    rs.Code == 200 ? console.log("Phieu nhap thanh cong: ", body.RefNo) : console.log("Phieu nhap loi: ", rs);
 
 }
 
