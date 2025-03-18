@@ -6,7 +6,7 @@ export const cuaHang = [
         "StockName": "Kho cửa hàng HN - 10 HÀNG BÚN - KHO 1 ",
         "BranchID": "1b607368-de86-4a2a-b1fa-a4d2a7007030",
         "BranchCode": "10HB",
-        "BranchName": "HN - 10 HÀNG BÚN  - KHO 1",
+        "BranchName": "HN - 10 HÀNG BÚN - KHO 1",
         "Tel": "0374032846",
         "Email": "phuongthuy11102000@gmail.com",
         "Address": "HN",

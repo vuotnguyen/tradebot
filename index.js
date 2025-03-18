@@ -8,7 +8,7 @@ import { v4 } from "uuid"
 
 import { Agent } from "https"; // Dùng `http` nếu API là HTTP
 import { jobSaveBill } from "./src/billLogic.js";
-
+import excelToJson from "convert-excel-to-json";
 const agent = new Agent({ keepAlive: true });
 
 const subMain = async () => {
@@ -93,22 +93,36 @@ const main = async () => {
     //     await delay(60000)
     // }
 
-    // getData()
-    jobSaveBill()
+    getData()
+    // jobSaveBill()
 
 }
 
 
 
 const handleData = () => {
-    const groupedData = dummyData.reduce((acc, item) => {
-        const { chiNhanh, maNhapHang, thoiGian, maNhaCungCap, tongTienHang, ghiChu, maHang, imei, donGia, soLuong } = item;
+    const rs = excelToJson({sourceFile: "data/phieunhap2020.xlsx", columnToKey: {
+        A: 'chiNhanh',
+        B: 'maNhapHang',
+        C: 'thoiGian',
+        D: 'maNhaCungCap',
+        E: 'tongTienHang',
+        F: 'ghiChu',
+        G: 'maHang',
+        H: 'imei',
+        I: 'donGia',
+        J: 'thanhTien',
+        K: 'soLuong'
+    }})
+
+    const groupedData = rs.nhapKho.reduce((acc, item) => {
+        const { chiNhanh, maNhapHang, thoiGian,maNhaCungCap, tongTienHang, ghiChu, maHang, imei, donGia, soLuong, thanhTien } = item;
 
         if (!acc[maNhapHang]) {
-            acc[maNhapHang] = { chiNhanh, maNhapHang, thoiGian, maNhaCungCap, tongTienHang, ghiChu, danhSachHang: [] };
+            acc[maNhapHang] = { chiNhanh,maNhaCungCap, maNhapHang, thoiGian, tongTienHang, ghiChu, danhSachHang: [] };
         }
 
-        acc[maNhapHang].danhSachHang.push({maHang, imei, donGia, soLuong, });
+        acc[maNhapHang].danhSachHang.push({maHang, imei, donGia, soLuong,thanhTien });
 
         return acc;
     }, {});
@@ -121,11 +135,8 @@ const handleData = () => {
 const getData = async () => {
     const data = handleData()
     for (const item of data) {
-
         try {
             const cuaHang = fetchCuaHang(item.chiNhanh)
-            
-            
             const gioHang = []
             let totalAmount = 0
             for (const element of item.danhSachHang) {
@@ -178,8 +189,8 @@ const getData = async () => {
                 RefType: 2095,
                 RefTypeName: "",
                 RefNo: item.maNhapHang,
-                RefDate: moment(item.thoiGian, "DD/MM/YYYY HH:mm:ss").format("YYYY-MM-DD HH:mm:ss"),
-                RefTime: moment(item.thoiGian, "DD/MM/YYYY HH:mm:ss").format("YYYY-MM-DD HH:mm:ss"),
+                RefDate: moment.utc(item.thoiGian).local().format("YYYY-MM-DDTHH:mm:ss"),
+                RefTime: moment.utc(item.thoiGian).local().format("YYYY-MM-DDTHH:mm:ss"),
                 BranchID: cuaHang.BranchID,
                 BranchName: cuaHang.BranchName,
                 ContactName: "",
@@ -188,8 +199,8 @@ const getData = async () => {
                 CreatedBy: "",
                 ModifiedDate: null,
                 ModifiedBy: "",
-                AccountObjectID: nhaCungCap[0]?.ObjectDetailID,
-                AccountObjectName: nhaCungCap[0]?.Name,
+                AccountObjectID: nhaCungCap[0].ObjectDetailID,
+                AccountObjectName: nhaCungCap[0].Name,
                 EditVersion: "",
                 TotalAmount: totalAmount,
                 CARefDate: null,
@@ -213,7 +224,7 @@ const getData = async () => {
                 IsFromBE: true
             }
             await saveData(cuaHang.BranchID,body)
-            // console.log(moment(item.thoiGian, "DD/MM/YYYY HH:mm:ss").format("YYYY-MM-DD HH:mm:ss"));
+            // console.log("cuâhng ", nhaCungCap[0]);
             
         } catch (error) {
             console.log(`error  ${error } when ${item.maNhapHang}` );
@@ -227,12 +238,12 @@ const fetchCuaHang = (chiNhanh) => {
     return result
 }
 const fetchPhieuNhap = async (brandId, maNhaCungCap) => {
-    const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/ObjectDetails?_dc=1740646651778&type=1&content=${maNhaCungCap}&branchId=${brandId}&editMode=1&isReturnEmpty=false&page=1&start=0&limit=50`, {
+    const response = await fetch(`https://taodentest2.mshopkeeper.vn/backendg2/api/ObjectDetails?_dc=1740646651778&type=1&content=${maNhaCungCap}&branchId=${brandId}&editMode=1&isReturnEmpty=false&page=1&start=0&limit=50`, {
         "headers": {
           "accept": "application/json",
           "accept-language": "en-US,en;q=0.9,vi;q=0.8",
           "authorization": `Bearer ${token}`,
-          "companycode": "taodentest",
+          "companycode": "taodentest2",
           "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"",
           "sec-ch-ua-mobile": "?1",
           "sec-ch-ua-platform": "\"Android\"",
@@ -242,7 +253,7 @@ const fetchPhieuNhap = async (brandId, maNhaCungCap) => {
           "x-misa-branchid": brandId,
           "x-misa-language": "vi-VN",
           "cookie": "x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; _gid=GA1.2.1900814718.1740360132; taodentest_Token=7611421578d14668be66db31dbe4808e; _ga_5RQ0H2DBF0=GS1.1.1740641202.11.1.1740641370.0.0.0; _ga_877E0J2DYM=GS1.1.1740641202.11.1.1740641370.0.0.0; _ga=GA1.1.370415893.1740037992; _ga_YLF50693DS=GS1.1.1740646457.23.1.1740646458.0.0.0; _ga_D8GFJLDVNQ=GS1.2.1740645286.24.1.1740646461.0.0.0; TS01fe7274=019ba1692dd14028ba606da954d25922f9dcab2984e26a969e0292278b671e97a3dacd2f39dba28a824e023fb1689c8aac59cee503",
-          "Referer": "https://taodentest.mshopkeeper.vn/main",
+          "Referer": "https://taodentest2.mshopkeeper.vn/main",
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         "body": null,
@@ -256,12 +267,12 @@ const fetchPhieuNhap = async (brandId, maNhaCungCap) => {
 }
 
 const fetchDanhSachHang = async (branchID,maHang) => {
-    const response = await fetch(`https://taodentest.mshopkeeper.vn/backendg1/api/InventoryItems/GetItemPagingQuickSearch?_dc=1740369237936&inventoryItemCategoryID=994C6FE5-DA83-441B-A0E8-57A6FED98FB2&getUnit=3&isGetServiceItem=false&isGetSetItem=false&vendorID=00000000-0000-0000-0000-000000000000&page=1&start=0&limit=50&filter=%5B%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22SKUCode%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemNameNoAccent%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemName%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22UnitPrice%22%2C%22operator%22%3A0%2C%22value%22%3A-1%2C%22type%22%3A7%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemType%22%2C%22operator%22%3A9%2C%22value%22%3A2%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemTypeSetFilter%22%2C%22operator%22%3A9%2C%22value%22%3A5%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%5D`, {
+    const response = await fetch(`https://taodentest2.mshopkeeper.vn/backendg2/api/InventoryItems/GetItemPagingQuickSearch?_dc=1740369237936&inventoryItemCategoryID=994C6FE5-DA83-441B-A0E8-57A6FED98FB2&getUnit=3&isGetServiceItem=false&isGetSetItem=false&vendorID=00000000-0000-0000-0000-000000000000&page=1&start=0&limit=50&filter=%5B%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22SKUCode%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemNameNoAccent%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemName%22%2C%22operator%22%3A1%2C%22value%22%3A${maHang}%2C%22type%22%3A1%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22UnitPrice%22%2C%22operator%22%3A0%2C%22value%22%3A-1%2C%22type%22%3A7%2C%22addition%22%3A2%2C%22group%22%3A%22SKUCode%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemType%22%2C%22operator%22%3A9%2C%22value%22%3A2%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%2C%7B%22xtype%22%3A%22filter%22%2C%22property%22%3A%22InventoryItemTypeSetFilter%22%2C%22operator%22%3A9%2C%22value%22%3A5%2C%22type%22%3A7%2C%22addition%22%3A1%2C%22group%22%3A%22InventoryItemType%22%7D%5D`, {
         "headers": {
           "accept": "application/json",
           "accept-language": "en-US,en;q=0.9,vi;q=0.8",
           "authorization": `Bearer ${token}`,
-          "companycode": "taodentest",
+          "companycode": "taodentest2",
           "sec-ch-ua": "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"",
           "sec-ch-ua-mobile": "?1",
           "sec-ch-ua-platform": "\"Android\"",
@@ -271,7 +282,7 @@ const fetchDanhSachHang = async (branchID,maHang) => {
           "x-misa-branchid": branchID,
           "x-misa-language": "vi-VN",
           "cookie": "x-deviceid=fae18cf23ea94c28b7fcfa66f2fd5660; ASP.NET_SessionId=ttkfrnhn0sryfyn322kau5iw; _gid=GA1.2.1900814718.1740360132; taodentest_Token=afd48085388b4166a1a96e2854d28006; _ga=GA1.1.370415893.1740037992; _ga_D8GFJLDVNQ=GS1.2.1740364977.11.1.1740366740.0.0.0; _ga_YLF50693DS=GS1.1.1740365582.9.1.1740366743.0.0.0; TS01fe7274=019ba1692db4570a0c36c1e37baec0635ee5228e5f65b263d1aa3d13c1758eb13ed5ccb6e6a7ccc96897f4807fb00a7ebae7626ae8",
-          "Referer": "https://taodentest.mshopkeeper.vn/main",
+          "Referer": "https://taodentest2.mshopkeeper.vn/main",
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         "body": null,
@@ -285,13 +296,13 @@ const fetchDanhSachHang = async (branchID,maHang) => {
 
 const saveData = async (branchID,body) => {
    
-    const response = await fetch("https://taodentest.mshopkeeper.vn/backendg1/api/INInwards", {
+    const response = await fetch("https://taodentest2.mshopkeeper.vn/backendg2/api/INInwards", {
         "headers": {
             "accept": "application/json",
             "accept-language": "en-US,en;q=0.9,vi;q=0.8",
             "Connection": "keep-alive",
             "authorization": `Bearer ${token}`,
-            "companycode": "taodentest",
+            "companycode": "taodentest2",
             "content-type": "application/json",
             "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
             "sec-ch-ua-mobile": "?0",
@@ -301,13 +312,13 @@ const saveData = async (branchID,body) => {
             "sec-fetch-site": "same-origin",
             "x-misa-branchid": branchID,
             "x-misa-language": "vi-VN",
-            "cookie": "_gid=GA1.2.1805397636.1740064661; x-deviceid=1fa93391747741088caf19ef50d2f6c2; ASP.NET_SessionId=q4fnao0uov4d4zercdebf04j; taodentest_Token=c4cb99497a42471ba9c3991b0833e0db; _ga=GA1.2.2089273383.1740064661; _ga_YLF50693DS=GS1.1.1740154099.3.1.1740155699.0.0.0; TS01fe7274=019ba1692dee36a0b76ac2e2da99d52eb357aeec5aa13d8743444598e77f318160c4da9bfbc9fc05b10862c17f6e9ddabcfc2f01d6; _gat=1; _ga_D8GFJLDVNQ=GS1.2.1740152457.3.1.1740157079.0.0.0",
-            "Referer": "https://taodentest.mshopkeeper.vn/main",
+            "cookie": "_ga_5RQ0H2DBF0=GS1.1.1740934889.8.0.1740934889.0.0.0; _ga_877E0J2DYM=GS1.1.1740934889.8.0.1740934889.0.0.0; x-deviceid=c5bcbd4f6a384c6c8741166dfc070944; _gid=GA1.2.366685867.1742312477; ASP.NET_SessionId=nk3ek4z1ru0en0d0jkyfd5gy; taodentest2_Token=8b30aea54b5f41ea94eac6d54a5a8864; _ga=GA1.2.2089273383.1740064661; _ga_YLF50693DS=GS1.1.1742312491.17.1.1742312498.0.0.0; _gat=1; TS01fe7274=019ba1692d007cce3d2a28ba8c76375ea764110cd6efdddf3c4f1b91a6fb4e1e107c452570f3a12fbef1a5e0a74b350ff21aa1f421; _ga_D8GFJLDVNQ=GS1.2.1742312477.13.1.1742314109.0.0.0",
+            "Referer": "https://taodentest2.mshopkeeper.vn/main",
             "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         "body": JSON.stringify(body),
         "method": "POST",
-        "agent": agent, // Gán agent để giữ kết nối
+        
     });
     const rs = await response.json();
     rs.Code == 200 ? console.log("Phieu nhap thanh cong: ", body.RefNo) : console.log("Phieu nhap loi: ", rs);
