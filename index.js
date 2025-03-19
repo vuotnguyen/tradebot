@@ -224,7 +224,7 @@ const getData = async () => {
                 IsFromBE: true
             }
             await saveData(cuaHang.BranchID,body)
-            // console.log("cuâhng ", nhaCungCap[0]);
+            // console.log("JSON.stringify(body) ", JSON.stringify(body));
             
         } catch (error) {
             console.log(`error  ${error } when ${item.maNhapHang}` );
