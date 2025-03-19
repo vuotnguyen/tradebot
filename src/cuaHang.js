@@ -13,7 +13,7 @@ export const cuaHang = [
             "StockName": "Kho cửa hàng kho tổng + sửa chữa",
     },
     {
-        "BranchName": "HN - 10 HÀNG BÚN - KHO 1 ",
+        "BranchName": "HN - 10 HÀNG BÚN - KHO 1",
         "BranchCode": "10HB",
         "Address": "10 Hàng Bún, Q.Ba Đình, TP. Hà Nội - Tel: 0366.91.91.91\nHotline phản ánh khách hàng: 0896.91.91.91 (Táo Đen)",
         "BranchID": "a9259b39-a403-4bdf-81f9-0be56b02f01d",
@@ -23,7 +23,7 @@ export const cuaHang = [
         "StockID": "776c69a1-23f7-45f1-9a1a-28ab110e59bf",
             "BranchID": "a9259b39-a403-4bdf-81f9-0be56b02f01d",
             "StockCode": "Khotaodenshop",
-            "StockName": "Kho cửa hàng HN - 10 HÀNG BÚN - KHO 1 ",
+            "StockName": "Kho cửa hàng HN - 10 HÀNG BÚN - KHO 1",
     },
     {
         "BranchName": "HN - 189 QUANG TRUNG - KHO 1 ",
@@ -52,7 +52,7 @@ export const cuaHang = [
             "StockName": "Kho cửa hàng HCM - 253 TRẦN QUANG KHẢI - KHO 1 ",
     },
     {
-        "BranchName": "HN - 302 THÁI HÀ - KHO 1 ",
+        "BranchName": "HN - 302 THÁI HÀ - KHO 1",
         "BranchCode": "320THAIHA",
         "Address": "302 Thái Hà, Q. Đống Đa, TP. HN - Tel: 082.30.22222\nHotline phản ánh khách hàng: 0896.91.91.91 (Táo Đen)",
         "BranchID": "15dfdfc3-64ec-4f45-a36f-cb973fe4be27",
@@ -62,7 +62,7 @@ export const cuaHang = [
         "StockID": "b0e026ed-5f09-4f87-9b08-9fc9f936c80d",
             "BranchID": "15dfdfc3-64ec-4f45-a36f-cb973fe4be27",
             "StockCode": "Khohn302thaihakho1",
-            "StockName": "Kho cửa hàng HN - 302 THÁI HÀ - KHO 1 ",
+            "StockName": "Kho cửa hàng HN - 302 THÁI HÀ - KHO 1",
     },
     {
         "BranchName": "HN - 406 CẦU GIẤY - KHO 1 ",
