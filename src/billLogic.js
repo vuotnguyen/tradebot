@@ -8,7 +8,7 @@ import excelToJson from "convert-excel-to-json";
 import { cuaHang } from "./cuaHang.js";
 
 const handleDataBill = () => {
-  const rs = excelToJson({sourceFile: "data/hoadon2020.xlsx", columnToKey: {
+  const rs = excelToJson({sourceFile: "data/fail1819.xlsx", columnToKey: {
     A: 'chiNhanh',
     B: 'maHoaDon',
     C: 'thoiGian',
