@@ -8,7 +8,7 @@ import excelToJson from "convert-excel-to-json";
 import { cuaHang } from "./cuaHang.js";
 
 const handleDataBill = () => {
-  const rs = excelToJson({sourceFile: "data/fail1819.xlsx", columnToKey: {
+  const rs = excelToJson({sourceFile: "data/hoadon1819test.xlsx", columnToKey: {
     A: 'chiNhanh',
     B: 'maHoaDon',
     C: 'thoiGian',
@@ -26,7 +26,7 @@ const handleDataBill = () => {
 }})
 
   
-  const groupedData = rs.sheetOne.reduce((acc, item) => {
+  const groupedData = rs.test.reduce((acc, item) => {
     const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
 
     if (!acc[maHoaDon]) {
@@ -90,7 +90,7 @@ export const jobSaveBill = async () => {
               Weight: 0,
               ConvertRate: 1,
               EditMode: 1,
-              InventoryItemType: 1,
+              InventoryItemType: itemDetail.InventoryItemType,
               UnitPriceDefault: element.donGia,
               UnitPriceOld: element.donGia,
               CostPrice: 0,

@@ -93,15 +93,15 @@ const main = async () => {
     //     await delay(60000)
     // }
 
-    // getData()
-    jobSaveBill()
+    getData()
+    // jobSaveBill()
 
 }
 
 
 
 const handleData = () => {
-    const rs = excelToJson({sourceFile: "data/phieunhap2020.xlsx", columnToKey: {
+    const rs = excelToJson({sourceFile: "data/phieunhap1819.xlsx", columnToKey: {
         A: 'chiNhanh',
         B: 'maNhapHang',
         C: 'thoiGian',
@@ -115,7 +115,7 @@ const handleData = () => {
         K: 'soLuong'
     }})
 
-    const groupedData = rs.nhapKho.reduce((acc, item) => {
+    const groupedData = rs.sheetOne.reduce((acc, item) => {
         const { chiNhanh, maNhapHang, thoiGian,maNhaCungCap, tongTienHang, ghiChu, maHang, imei, donGia, soLuong, thanhTien } = item;
 
         if (!acc[maNhapHang]) {
