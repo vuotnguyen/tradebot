@@ -8,7 +8,7 @@ import excelToJson from "convert-excel-to-json";
 import { cuaHang } from "./cuaHang.js";
 
 const handleDataBill = () => {
-  const rs = excelToJson({sourceFile: "data/fail1819.xlsx", columnToKey: {
+  const rs = excelToJson({sourceFile: "data/hoadon1819.xlsx", columnToKey: {
     A: 'chiNhanh',
     B: 'maHoaDon',
     C: 'thoiGian',
@@ -26,7 +26,7 @@ const handleDataBill = () => {
 }})
 
   
-  const groupedData = rs.sheetOne.reduce((acc, item) => {
+  const groupedData = rs.dataTest.reduce((acc, item) => {
     const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
 
     if (!acc[maHoaDon]) {
@@ -63,12 +63,14 @@ export const jobSaveBill = async () => {
       const store = cuaHang.find((element) => element.BranchName == item.chiNhanh)
       const gioHang = []
       let totalAmount = 0
+      let totalDiscount = 0
       const uuid = v4()
       for (const element of item.danhSachHang) {
         const timestamp = Date.now();
         const maHang = element.maHang.replace(/\\\\/g, "\\")
         const data = await fetchHangHoa(store.BranchID, encodeURIComponent(JSON.stringify(element.maHang)))
- 
+        totalAmount += element.donGia * element.soLuong
+        totalDiscount += element.giamGiaHangHoa * element.soLuong
         
         const detail = data
           .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
@@ -84,7 +86,7 @@ export const jobSaveBill = async () => {
               UnitPrice: element.donGia,
               Amount: element.donGia * element.soLuong,
               DiscountRate: 0,
-              DiscountAmount: element.giamGiaHangHoa,
+              DiscountAmount: element.giamGiaHangHoa * element.soLuong,
               errorQuantity: false,
               RefDetailType: 1,
               Weight: 0,
@@ -103,18 +105,18 @@ export const jobSaveBill = async () => {
               ManageType: 2,
               InventoryItemParent: "00000000-0000-0000-0000-000000000000",
               TaxRate: 10,
-              UnitPriceBeforeTax: element.donGia * 0.9,
+              // UnitPriceBeforeTax: element.donGia * 0.9,
               Barcode: itemDetail.Barcode,
-              TotalAmount: element.thanhTien,
+              // TotalAmount: element.thanhTien,
               SortOrder: gioHang.length + 1,
               QuantityRoot: 1,
-              DiscountAmountBeforeTax: element * 0.1,
+              // DiscountAmountBeforeTax: element * 0.1,
               FeeReturnValue: 0,
               AllocationAmount: 0, // ?
               AllocationAmountBeforeTax: 0, //?
               AllocationPointAmount: 0,//?
               AllocationPointAmountBeforeTax: 0,//?
-              AmountBeforeTax: element.donGia * 0.9,//?
+              // AmountBeforeTax: element.donGia * 0.9,//?
               TaxAmount: 0,//?
               enableDescription: true,
               Description: item.maHoaDon,
@@ -127,24 +129,24 @@ export const jobSaveBill = async () => {
         gioHang.push(detail[0])
       }
       const khachHang = await fetchKhachHang(item.maKhachHang)
-
       const bill = {
         maHoaDon: item.maHoaDon,
         EditMode: 1,
-        TotalItemAmount: item.tongTien,
+        TotalItemAmount: totalAmount,
         TotalItem: gioHang.length + 1,
         ReceiveAmount: item.tongTien,
         CashAmount: item.tongTien,
-        RemainAmount: 0,
+        RemainAmount: item.tongTien,
         CardAmount: 0,
         TotalAmount: item.tongTien,
+        TotalActualAmount: item.tongTien,
         RefType: 550,
         DiscountAmount: item.giamGiaHoaDon,
         VATAmount: 0,
         DeliveryAmount: 0,
         PointAmount: 0,
         ReturnExchangeAmount: 0,
-        TotalItemDiscountAmount: 0,
+        TotalItemDiscountAmount: totalDiscount,
         DepositAmount: 0,
         TotalCoupon: 0,
         ChangeAmount: 0,
@@ -178,7 +180,6 @@ export const jobSaveBill = async () => {
         IsErrorPointAmount: false,
         DeliveryAmountBeforeTax: 0,
         ReturnExchangeAmountBeforeTax: 0,
-        TotalActualAmount: item.tongTien,
         DebtReductionAmount: 0,
         TotalReceipt: 0,
         PromotionID: "",

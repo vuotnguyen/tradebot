@@ -93,15 +93,15 @@ const main = async () => {
     //     await delay(60000)
     // }
 
-    // getData()
-    jobSaveBill()
+    getData()
+    // jobSaveBill()
 
 }
 
 
 
 const handleData = () => {
-    const rs = excelToJson({sourceFile: "data/phieunhap2020.xlsx", columnToKey: {
+    const rs = excelToJson({sourceFile: "data/nhapHang1819.xlsx", columnToKey: {
         A: 'chiNhanh',
         B: 'maNhapHang',
         C: 'thoiGian',
