@@ -92,7 +92,7 @@ export const jobSaveBill = async () => {
               Weight: 0,
               ConvertRate: 1,
               EditMode: 1,
-              InventoryItemType: 1,
+              InventoryItemType: itemDetail.InventoryItemType,
               UnitPriceDefault: element.donGia,
               UnitPriceOld: element.donGia,
               CostPrice: 0,
