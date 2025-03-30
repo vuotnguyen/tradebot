@@ -115,7 +115,7 @@ const handleData = () => {
         K: 'soLuong'
     }})
 
-    const groupedData = rs.sheetOne.reduce((acc, item) => {
+    const groupedData = rs.nhapKho.reduce((acc, item) => {
         const { chiNhanh, maNhapHang, thoiGian,maNhaCungCap, tongTienHang, ghiChu, maHang, imei, donGia, soLuong, thanhTien } = item;
 
         if (!acc[maNhapHang]) {
