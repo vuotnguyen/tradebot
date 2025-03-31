@@ -26,7 +26,7 @@ const handleDataBill = () => {
 }})
 
   
-  const groupedData = rs.xuatKho.reduce((acc, item) => {
+  const groupedData = rs.oneMonth.reduce((acc, item) => {
     const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
 
     if (!acc[maHoaDon]) {
@@ -72,7 +72,7 @@ export const jobSaveBill = async () => {
         const data = await fetchHangHoa(store.BranchID, encodeURIComponent(JSON.stringify(element.maHang)))
         totalAmount += element.donGia * element.soLuong
         totalDiscount += element.giamGiaHangHoa * element.soLuong
-        amountAfterDiscount += (totalAmount - totalDiscount)
+        amountAfterDiscount += ((element.donGia * element.soLuong) - (element.giamGiaHangHoa * element.soLuong))
         const detail = data
           .filter(itemDetail => itemDetail.SKUCode.trim().toLowerCase() == maHang.trim().toLowerCase())
           .map(itemDetail => (
@@ -131,7 +131,7 @@ export const jobSaveBill = async () => {
         maHoaDon: item.maHoaDon,
         EditMode: 1,
         TotalItemAmount: totalAmount,
-        TotalItem: gioHang.length + 1,
+        TotalItem: gioHang.length,
         ReceiveAmount: amountAfterDiscount - item.giamGiaHoaDon,
         CashAmount: amountAfterDiscount - item.giamGiaHoaDon,
         RemainAmount: amountAfterDiscount - item.giamGiaHoaDon,
@@ -238,6 +238,8 @@ export const jobSaveBill = async () => {
         UploadData: JSON.stringify([bill])
       }
       await saveBill(store.BranchID,body, item.maHoaDon)
+      // gioHang.length >=1 && console.log('body :', body);
+      
       
     } catch (error) {
         console.log(`phieu xuat ${item.maHoaDon} loi:  ${error}`);
