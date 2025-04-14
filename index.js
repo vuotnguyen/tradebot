@@ -101,7 +101,7 @@ const main = async () => {
 
 
 const handleData = () => {
-    const rs = excelToJson({sourceFile: "data/nhapHang1819.xlsx", columnToKey: {
+    const rs = excelToJson({sourceFile: "data/phieunhap23.xlsx", columnToKey: {
         A: 'chiNhanh',
         B: 'maNhapHang',
         C: 'thoiGian',
@@ -224,7 +224,7 @@ const getData = async () => {
                 IsFromBE: true
             }
             await saveData(cuaHang.BranchID,body)
-            // console.log("JSON.stringify(body) ", JSON.stringify(body));
+            
             
         } catch (error) {
             console.log(`error  ${error } when ${item.maNhapHang}` );
