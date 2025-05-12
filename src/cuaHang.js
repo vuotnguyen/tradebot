@@ -65,7 +65,7 @@ export const cuaHang = [
             "StockName": "Kho cửa hàng HN - 302 THÁI HÀ - KHO 1",
     },
     {
-        "BranchName": "HN - 406 CẦU GIẤY - KHO 1 ",
+        "BranchName": "HN - 406 CẦU GIẤY - KHO 1",
         "BranchCode": "406CAUGIAY",
         "Address": "406 Cầu Giấy, Q. Cầu Giấy, TP. HN - Tel: 0833.91.91.91\nHotline phản ánh khách hàng: 0896.91.91.91 (Táo Đen)",
         "BranchID": "c37720df-3b8b-49eb-91a1-b175f4f9d957",
@@ -75,10 +75,10 @@ export const cuaHang = [
         "StockID": "fbfbbd0d-1580-4447-bc2e-1e5381a4dd79",
             "BranchID": "c37720df-3b8b-49eb-91a1-b175f4f9d957",
             "StockCode": "Khohn406caugiaykho1",
-            "StockName": "Kho cửa hàng HN - 406 CẦU GIẤY - KHO 1 ",
+            "StockName": "Kho cửa hàng HN - 406 CẦU GIẤY - KHO 1",
     },
     {
-        "BranchName": "HN - TĐ KHO - NGHI TÀM ",
+        "BranchName": "HN - TĐ KHO - NGHI TÀM",
         "BranchCode": "KHO",
         "Address": "Địa chỉ: Số 28 ngách 50/119 ngõ 310 đường Nghi Tàm (Tổ 4 cụm 1), Phường Tứ Liên, Quận Tây Hồ, Thành phố Hà Nội ",
         "BranchID": "c9be3104-9a25-4b42-b1c0-35e3d746432e",
@@ -88,6 +88,6 @@ export const cuaHang = [
         "StockID": "add22161-bb7e-4306-93f6-9e1415201fe9",
             "BranchID": "c9be3104-9a25-4b42-b1c0-35e3d746432e",
             "StockCode": "Khohntdkhonghitam",
-            "StockName": "Kho cửa hàng HN - TĐ KHO - NGHI TÀM ",
+            "StockName": "Kho cửa hàng HN - TĐ KHO - NGHI TÀM",
     }
 ]

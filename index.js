@@ -8,6 +8,7 @@ import { v4 } from "uuid"
 import { Agent } from "https"; // Dùng `http` nếu API là HTTP
 import { jobSaveBill } from "./src/billLogic.js";
 import excelToJson from "convert-excel-to-json";
+import { token } from "./src/serviceApi.js";
 const agent = new Agent({ keepAlive: true });
 
 const subMain = async () => {
@@ -100,7 +101,7 @@ const main = async () => {
 
 
 const handleData = () => {
-    const rs = excelToJson({sourceFile: "data/phieunhap23.xlsx", columnToKey: {
+    const rs = excelToJson({sourceFile: "data/thieu2025.xlsx", columnToKey: {
         A: 'chiNhanh',
         B: 'maNhapHang',
         C: 'thoiGian',
@@ -133,6 +134,7 @@ const handleData = () => {
 }
 const getData = async () => {
     const data = handleData()
+
     for (const item of data) {
         try {
             const cuaHang = fetchCuaHang(item.chiNhanh)
@@ -176,7 +178,7 @@ const getData = async () => {
                         Serials: element?.imei,
                         EditMode: 1,
                         BakEditMode: 1,
-                        ListSerial: element?.imei?.includes(",") ? element.imei.split(",") : [element.imei] 
+                        ListSerial: element?.imei?.toString().includes(",") ? element.imei.split(",") : [element.imei] 
                     }))
                 gioHang.push(detail[0])
 

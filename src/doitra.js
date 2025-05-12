@@ -1,43 +1,54 @@
+
+
 import moment from "moment"
 import { v4 } from "uuid"
+// import { store } from "./bill.js";
+
 import excelToJson from "convert-excel-to-json";
 import { cuaHang } from "./cuaHang.js";
-import { token } from "./serviceApi.js";
+import { apiGetHangHoa, token } from "./serviceApi.js";
 
-const handleDataBill = () => {
-  const rs = excelToJson({sourceFile: "data/hoadon2025.xlsx", columnToKey: {
-    A: 'chiNhanh',
-    B: 'maHoaDon',
-    C: 'thoiGian',
-    D: 'maKhachHang',
-    E: 'ghiChu',
-    F: 'giamGiaHoaDon',
-    G: 'tongTien',
-    H: 'maHang',
-    I: 'imei',
-    J: 'soLuong',
-    K: 'donGia',
-    L: 'giamGiaHangHoa',
-    M: 'giaBan',
-    N: 'thanhTien'
-}})
-
-  
-  const groupedData = rs.xuatKho.reduce((acc, item) => {
-    const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
-
-    if (!acc[maHoaDon]) {
-      acc[maHoaDon] = { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, danhSachHang: [] };
+const handleDoiTra = () => {
+  const rs = excelToJson({
+    sourceFile: "data/dataTest.xlsx", columnToKey: {
+      A: 'chiNhanh',
+      B: 'maHoaDon',
+      C: 'thoiGian',
+      D: 'maKhachHang',
+      E: 'ghiChu',
+      F: 'giamGiaHoaDon',
+      G: 'tongTien',
+      H: 'maHang',
+      I: 'imei',
+      J: 'soLuong',
+      K: 'donGia',
+      L: 'giamGiaHangHoa',
+      M: 'giaBan',
+      N: 'thanhTien'
     }
+  })
 
-    acc[maHoaDon].danhSachHang.push({ maHang, imei, donGia, soLuong, giamGiaHangHoa, giaBan, thanhTien });
+  try {
+    const groupedData = rs.testPhiDoitra?.reduce((acc, item) => {
 
-    return acc;
-  }, {});
 
-  const result = Object.values(groupedData);
-
-  return result;
+      const { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, maHang, imei, soLuong, donGia, giamGiaHangHoa, giaBan, thanhTien } = item;
+  
+      if (!acc[maHoaDon]) {
+        acc[maHoaDon] = { chiNhanh, maHoaDon, thoiGian, maKhachHang, ghiChu, giamGiaHoaDon, tongTien, danhSachHang: [] };
+      }
+  
+  
+      acc[maHoaDon].danhSachHang.push({ maHang, imei, donGia, soLuong, giamGiaHangHoa, giaBan, thanhTien });
+      return acc;
+    }, {});
+  
+    const result = Object.values(groupedData);
+    return result;
+  } catch (error) {
+    return rs.testPhiDoiTra
+  }
+  
 }
 
 const generateRandomString = (length = 9) => {
@@ -52,11 +63,12 @@ const generateRandomString = (length = 9) => {
   return result;
 }
 
-export const jobSaveBill = async () => {
-  const dataBill = handleDataBill()
+export const jobSaveDoiTra = async () => {
+  const dataBill = handleDoiTra()
   for (const item of dataBill) {
     try {
       const store = cuaHang.find((element) => element.BranchName.trim() == item.chiNhanh.trim())
+
       const gioHang = []
       let totalAmount = 0
       let amountAfterDiscount = 0
@@ -64,7 +76,8 @@ export const jobSaveBill = async () => {
       const uuid = v4()
       for (const element of item.danhSachHang) {
         const timestamp = Date.now();
-        const maHang = element.maHang.replace(/\\\\/g, "\\")
+        const maHang = element?.maHang?.replace(/\\\\/g, "\\")
+
         const data = await fetchHangHoa(store.BranchID, encodeURIComponent(JSON.stringify(element.maHang)))
         totalAmount += element.donGia * element.soLuong
         totalDiscount += element.giamGiaHangHoa * element.soLuong
@@ -82,10 +95,11 @@ export const jobSaveBill = async () => {
               UnitName: itemDetail.UnitName,
               UnitPrice: element.donGia,
               Amount: element.donGia * element.soLuong,
+              TotalAmount: element.donGia * element.soLuong,
               DiscountRate: 0,
               DiscountAmount: element.giamGiaHangHoa * element.soLuong,
               errorQuantity: false,
-              RefDetailType: 1, // đổi trả: 2
+              RefDetailType: 2, // đổi trả: 2
               Weight: 0,
               ConvertRate: 1,
               EditMode: 1,
@@ -122,28 +136,31 @@ export const jobSaveBill = async () => {
         gioHang.push(detail[0])
       }
       const khachHang = await fetchKhachHang(item.maKhachHang)
-      
+
       const bill = {
         maHoaDon: item.maHoaDon,
         EditMode: 1,
         TotalItemAmount: totalAmount,
+        TotalItemReturnAmount: totalAmount,
+        TotalItemAmountReturnWithDisCount: totalAmount,
         TotalItem: gioHang.length,
-        ReceiveAmount: amountAfterDiscount - item.giamGiaHoaDon,
-        CashAmount: amountAfterDiscount - item.giamGiaHoaDon,
-        RemainAmount: amountAfterDiscount - item.giamGiaHoaDon,
+        ReceiveAmount: (amountAfterDiscount + item.giamGiaHoaDon),
+        TotalAmount: (amountAfterDiscount + item.giamGiaHoaDon),
+        ChangeAmount: (amountAfterDiscount + item.giamGiaHoaDon) * -1,
+        TotalActualAmount: (amountAfterDiscount + item.giamGiaHoaDon),
+        RemainAmount: (amountAfterDiscount + item.giamGiaHoaDon),
         CardAmount: 0,
-        TotalAmount: amountAfterDiscount - item.giamGiaHoaDon,
-        TotalActualAmount: amountAfterDiscount - item.giamGiaHoaDon,
-        RefType: 550, // đổi trả: 553
-        DiscountAmount: item.giamGiaHoaDon,
+
+
+        RefType: 553, // đổi trả: 553
+        DiscountAmount: 0,
         VATAmount: 0,
         DeliveryAmount: 0,
         PointAmount: 0,
-        ReturnExchangeAmount: 0,
+        ReturnExchangeAmount: item.giamGiaHoaDon,
         TotalItemDiscountAmount: totalDiscount,
         DepositAmount: 0,
         TotalCoupon: 0,
-        ChangeAmount: 0,
         NotTakeChangeAmount: 0,
         ChangeDeductedAmount: 0,
         TaxAmount: 0,
@@ -165,8 +182,7 @@ export const jobSaveBill = async () => {
         ServiceTaxRate: 10,
         IsApplyTax: true,
         Description: item.ghiChu,
-        TotalItemReturnAmount: 0,
-        TotalItemAmountReturnWithDisCount: 0,
+
         TaxReductionAmount: 0,
         TotalItemAmountBeforeTax: 0,
         TotalItemDiscountAmountBeforeTax: 0,
@@ -208,6 +224,18 @@ export const jobSaveBill = async () => {
         CardRank: "",
         PaymentTerm: null,
         SAInvoiceDetails: gioHang,
+        SAInvoicePayments: [{
+          SAInvoicePaymentID: v4(),
+          Amount: amountAfterDiscount - item.giamGiaHoaDon,
+          CardName: "Tiền mặt",
+          PaymentName: "Tiền mặt",
+          PaymentType: 1,
+          EditMode: 1,
+          disable: false,
+          RefID: uuid,
+          CODE: `MISA_${generateRandomString(9)}_${Date.now()}`,
+          BankAccountID: ""
+        }],
         SAInvoiceCoupons: [],
         SAInvoiceExtensions: [],
         SAInvoiceDebitDetails: [],
@@ -221,10 +249,13 @@ export const jobSaveBill = async () => {
         CreatedDate: moment(new Date(item.thoiGian)).format("YYYY-MM-DDTHH:mm:ssZ"),
         UploadData: JSON.stringify([bill])
       }
-      await saveBill(store.BranchID,body, item.maHoaDon)
-      
+      await saveBill(store.BranchID, body, item.maHoaDon)
+      // console.log('body :', item.chiNhanh);
+
+
     } catch (error) {
-        console.log(`phieu xuat ${item.maHoaDon} loi:  ${error}`);
+      console.log(`phieu xuat ${item.maHoaDon} loi:  ${error}`);
+
     }
   }
 }
@@ -280,7 +311,7 @@ const fetchKhachHang = async (maKhachHang) => {
   return rs.Data[0]
 }
 
-const saveBill = async (branchID,body, maHoaDon) => {
+const saveBill = async (branchID, body, maHoaDon) => {
   const response = await fetch("https://taodentest2.mshopkeeper.vn/salecloud/uploadg2/SAInvoice/save-sync", {
     "headers": {
       "accept": "application/json, text/plain, */*",
@@ -304,6 +335,7 @@ const saveBill = async (branchID,body, maHoaDon) => {
     "body": JSON.stringify(body),
     "method": "POST"
   });
+
   const rs = await response.json();
   rs.Code == 200 && rs.Success == true ? console.log("Phieu xuat hoa don thanh cong: ", rs.Data.RefNo) : console.log("Phieu xuat loi: ", maHoaDon);
 }
