@@ -2,7 +2,6 @@ import ccxt, { binance } from "ccxt"
 import delay from "delay"
 import 'dotenv/config'
 import moment from "moment"
-import { dummyData, token } from "./src/data.js";
 import { cuaHang } from "./src/cuaHang.js";
 import { v4 } from "uuid"
 
